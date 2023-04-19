@@ -86,7 +86,38 @@ function init() {
     if(saved_chats) {
         Object.assign(chats, saved_chats);
     }
+    else {
+        chats.push({
+            topic: "Untitled",
+            new_prompt: "",
+            messages: [
+                {"role": "system", "content": "You are a helpful assistant."}
+            ],
+            arguments: {
+                model: "gpt-3.5-turbo",
+                temperature: 1,
+                top_p: 1,
+                n: 1,
+                stream: false,
+                stop: null,
+                max_tokens: 0, // inf
+                presence_penalty: 0,
+                frequency_penalty: 0,
+                logit_bias: null,
+                user: null
+            },
+            predict_questions: [],
+            waiting_for_resp: false,
+            waiting_for_title: false,
+            waiting_for_predict: false,
+            show_predict_questions: false,
+            used_tokens: 0
+        });
+    }
     for(var i=0; i<chats.length; i++) {
+        if(!chats[i].new_prompt) {
+            chats[i].new_prompt = "";
+        }
         chats[i].waiting_for_resp = false;
         chats[i].waiting_for_title = false;
         chats[i].waiting_for_predict = false;
@@ -226,11 +257,16 @@ onMounted(()=>{
     <div class="container-fluid vh-100 px-0 d-flex flex-column" v-cloak>
         <!-- 登录登出、全局设置与主题 -->
         <div style="position: absolute;top: 13px; right: 10px; z-index: 1000" class="w-100 clearfix">
-            <button v-if="cfg.theme=='light'" @click="switch_theme('dark')" class="float-end btn btn-sm" aria-label="切换到暗黑主题" title="切换到暗黑主题"><i class="bi bi-moon-stars"></i></button>
-            <button v-if="cfg.theme=='dark'" @click="switch_theme('light')" class="float-end btn btn-sm" aria-label="切换到明亮主题" title="切换到明亮主题"><i class="bi bi-sun"></i></button>
-            <button @click="show_cfg_panel=!show_cfg_panel" class="btn btn-sm float-end" aria-label="设置" title="设置"><i class="bi bi-gear"></i></button>
+            <div v-if="active_chat&&((!show_chat_list&&!show_cfg_panel)||zen_mode)" style="max-width: 60%" class="float-start px-4 pt-1 fw-bold d-sm-block d-md-none text-truncate">{{active_chat.topic}}</div>
+            <button @click="zen_mode=!zen_mode" class="float-end btn btn-sm" aria-label="全屏模式" title="全屏模式"><i class="bi" :class="zen_mode?'bi-arrows-angle-contract':'bi-arrows-angle-expand'"></i></button>
+            <template v-if="!zen_mode">
+                <button v-if="cfg.theme=='light'" @click="switch_theme('dark')" class="float-end btn btn-sm" aria-label="切换到暗黑主题" title="切换到暗黑主题"><i class="bi bi-moon-stars"></i></button>
+                <button v-if="cfg.theme=='dark'" @click="switch_theme('light')" class="float-end btn btn-sm" aria-label="切换到明亮主题" title="切换到明亮主题"><i class="bi bi-sun"></i></button>
+                <button @click="show_cfg_panel=!show_cfg_panel" class="btn btn-sm float-end" aria-label="设置" title="设置"><i class="bi bi-gear"></i></button>
+                <button v-if="!show_cfg_panel" @click="show_chat_list=!show_chat_list" class="float-end btn btn-sm d-sm-block d-md-none" aria-label="话题列表" title="话题列表"><i class="bi bi-chat"></i></button>
+            </template>
         </div>
-        <TopNav :zen_mode="zen_mode" :topic="''" :init_theme="cfg.theme"/>
+        <TopNav :zen_mode="zen_mode" :topic="active_chat?active_chat.topic:''" :init_theme="cfg.theme"/>
         <div class="row mx-0 flex-grow-1 overflow-y-auto">
             <!-- 左侧话题列表 -->
             <div class="pb-5 h-100 col-md-2" :class="{'border-end': !zen_mode, 'col-sm-12': show_chat_list&&!show_cfg_panel&&!zen_mode, 'd-none d-md-block': !show_chat_list||show_cfg_panel||zen_mode}">
@@ -260,7 +296,7 @@ onMounted(()=>{
             </div>
             <!-- 工作区 -->
             <div class="col-sm-12 h-100" :class="{'px-0': cfg.msg_view=='chatgpt'||zen_mode, 'd-none d-md-block col-md-8': (show_cfg_panel||show_chat_list)&&!zen_mode, 'col-md-8': zen_mode, 'col-md-10': !show_cfg_panel&&!zen_mode}">
-                <ChatUI :cfg="cfg" :chats="chats" :active_chat="active_chat" :zen_mode="zen_mode" @all_chats_removed="new_chat" @chat_removed="(chatidx)=>active_chat=chats[chatidx]" @last_chat_removed="active_chat=chats[chats.length-1]"/>
+                <ChatUI v-if="active_chat" :cfg="cfg" :chats="chats" :active_chat="active_chat" :zen_mode="zen_mode" @all_chats_removed="new_chat" @chat_removed="(chatidx)=>active_chat=chats[chatidx]" @last_chat_removed="active_chat=chats[chats.length-1]"/>
             </div>
             <!-- 系统设置 -->
             <div v-if="show_cfg_panel&&!zen_mode" class="col-md-2 gx-0 pb-3 h-100" :class="{'col-sm-12': !show_chat_list, 'border-start': !zen_mode}">

@@ -6,6 +6,7 @@ import { ref, computed, nextTick } from "vue"
 import SystemMsg from "./SystemMsg.vue"
 import ChatToolBar from "./ChatToolBar.vue"
 import ChatInput from "./ChatInput.vue"
+import { send_prompt, stop_streaming, try_again, predict_question } from "./lib.js"
 
 const props = defineProps({
     cfg: Object,
@@ -16,7 +17,6 @@ const props = defineProps({
 
 const emit = defineEmits(["all_chats_removed", "last_chat_removed", "chat_removed"]);
 
-const new_prompt = ref("");
 const show_system_msg = ref(false);
 const editing_user_msg = ref(null);
 const editing_msg_backup = ref("");
@@ -314,6 +314,23 @@ function scrollToBottom() {
         pg.scrollTop = pg.scrollHeight;
     }
 }
+
+function update_prompt(msg) {
+    const msgidx = props.active_chat.messages.indexOf(msg);
+    if(msg.role != "user") {
+        return
+    }
+    // 从指定的message开始重新生成问题
+    editing_user_msg.value = null;
+    editing_msg_backup.value = "";
+    props.active_chat.messages.splice(msgidx + 1, props.active_chat.messages.length - msgidx - 1);
+    send_prompt(props.active_chat, true, "", props.cfg.auto_title, props.cfg.compact_mode, props.cfg.use_proxy, props.cfg.api_key, scrollToBottom);
+}
+
+function select_predict_question(q) {
+    props.active_chat.new_prompt = q;
+    // this.$refs.maininput.focus();
+}
 </script>
 <template>
     <div class="h-100 pt-3 d-flex flex-column">
@@ -353,7 +370,10 @@ function scrollToBottom() {
                             </span>
                             <i v-else class="bi bi-trash ms-2 float-end" style="cursor: pointer" @click="removing_msg=msg"></i>
                             <i v-if="msg.role=='user'" class="bi bi-pencil-square float-end ms-2" style="cursor: pointer" @click="prepare_update_prompt(msg)"></i>
-                            <i v-if="msg.role=='user'&&msgidx>=active_chat.messages.length-2" class="bi bi-arrow-repeat float-end ms-5" style="cursor: pointer" @click="try_again(active_chat, msgidx)"></i>    
+                            <i v-if="msg.role=='user'&&msgidx>=active_chat.messages.length-2" 
+                                class="bi bi-arrow-repeat float-end ms-5" 
+                                role="button" 
+                                @click="try_again(active_chat, msgidx, cfg.auto_title, cfg.compact_mode, cfg.use_proxy, cfg.api_key, scrollToBottom)"></i>    
                             </template>
                             <span v-if="msg.role=='user' && editing_user_msg===msg" class="float-end ms-5">
                                 <i class="bi bi-send-fill text-success" style="cursor: pointer" @click="update_prompt(msg)"></i>
@@ -435,7 +455,7 @@ function scrollToBottom() {
         <div class="w-100 align-self-end" :class="{'chatgpt-msg-padding-zen': zen_mode, 'pb-3': !zen_mode, 'border-top': !edit_api_key&&!zen_mode, 'px-2': cfg.msg_view=='chatgpt'||zen_mode}">
             <template v-if="!edit_api_key&&!zen_mode">
                 <div id="ipredicts" class="fs-8" v-if="active_chat && active_chat.show_predict_questions">
-                    <button class="btn btn-sm btn-link mt-2" :disabled="active_chat.waiting_for_predict" @click="predict_question(active_chat, true)">
+                    <button class="btn btn-sm btn-link mt-2" :disabled="active_chat.waiting_for_predict" @click="predict_question(active_chat, true, cfg.compact_mode, cfg.use_proxy, cfg.api_key)">
                         <i :class="active_chat.waiting_for_predict?'spinner-grow spinner-grow-sm':'bi bi-arrow-repeat'"></i>
                     </button>
                     <button class="btn btn-sm btn-link border rounded-pill mt-2 me-1" style="color: var(--bs-secondary-text); background-color: var(--bs-secondary-bg-subtle); border-color: var(--bs-secondary-border-subtle)" v-for="pq in active_chat.predict_questions" @click="select_predict_question(pq)">{{pq}}</button>
