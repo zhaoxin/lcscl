@@ -16,8 +16,8 @@ function normalize_msg(msgs, compact_mode) {
     }
 }
 
-function validate_argument(chat, arg) {
-    if(!arg || arg=="stop") {
+function validate_argument(chat, arg, ok_callback, ng_callback) {
+    if(arg=="stop") {
         try {
             var prefix = "";
             var postfix = "";
@@ -26,21 +26,36 @@ function validate_argument(chat, arg) {
                 postfix = '"';
             }
             const s = JSON.parse(prefix + chat.arguments.stop + postfix);
+            if(ok_callback) {
+                ok_callback("stop");
+            }
             return true;
         }
         catch(err) {
+            if(ng_callback) {
+                ng_callback("stop");
+            }
             return false;
         }
     }
-    if(!arg || arg=="logit_bias") {
+    if(arg=="logit_bias") {
         try {
             if(chat.arguments.logit_bias && (chat.arguments.logit_bias[0] != "{" || chat.arguments.logit_bias[chat.arguments.logit_bias.length-1] != '}')) {
+                if(ng_callback) {
+                    ng_callback("logit_bias");
+                }
                 return false;
             }
             const s = JSON.parse(chat.arguments.logit_bias);
+            if(ok_callback) {
+                ok_callback("logit_bias");
+            }
             return true;
         }
         catch(err) {
+            if(ng_callback) {
+                ng_callback("logit_bias");
+            }
             return false;
         }
     }
@@ -59,10 +74,10 @@ function compose_arguments(chat, compact_mode) {
     if(chat.arguments.frequency_penalty < -2 || chat.arguments.frequency_penalty > 2) {
         chat.arguments.frequency_penalty = 0;
     }
-    if(!validate_argument(chat, "stop")) {
+    if(!validate_argument(chat, "stop", null, null)) {
         chat.arguments.stop = null;
     }
-    if(!validate_argument(chat, "logit_bias")) {
+    if(!validate_argument(chat, "logit_bias", null, null)) {
         chat.arguments.logit_bias = null;
     }
     if(chat.arguments.max_tokens < 1) {
@@ -99,7 +114,7 @@ function get_title(chat, compact_mode, use_proxy, api_key) {
             use_proxy=="openai"?"https://api.openai.com/v1/chat/completions":"https://api.lcscl.net", 
             {
                 "model": "gpt-3.5-turbo", "messages": cntxt.concat([{"role": "user", "content": "Please give this conversation a title in less than 10 words. Without any punctuation."}]), 
-                "temperature": 0
+                // "temperature": 0
             }, 
             {headers:{"Authorization": "Bearer "+api_key}})
         .then(function(resp) {
@@ -306,7 +321,7 @@ function try_again(chat, msgidx, auto_title, compact_mode, use_proxy, api_key, n
     if(last_user_msg > -1) {
         chat.messages.splice(last_user_msg + 1, chat.messages.length - last_user_msg - 1);
     }
-    send_prompt(chat, true, "", auto_title, compact_mode, use_proxy, api_key, new_msg_callback);
+    send_prompt(chat, true, auto_title, compact_mode, use_proxy, api_key, new_msg_callback);
 }
 
 function predict_question(chat, force_refresh, compact_mode, use_proxy, api_key) {
@@ -335,8 +350,8 @@ function predict_question(chat, force_refresh, compact_mode, use_proxy, api_key)
         axios.post(
             use_proxy=="openai"?"https://api.openai.com/v1/chat/completions":"https://api.lcscl.net", 
             {
-                "model": "gpt-3.5-turbo", "messages": cntxt.concat([{"role": "user", "content": 'Please predict 5 related topics in Chinese and only Chinese based on above conversation. Under 10 words for each. Please reply with standard JSON array. For example:["q1", "q2", "q3", "q4", "q5"]。'}]), 
-                "temperature": 0
+                "model": "gpt-3.5-turbo", "messages": cntxt.concat([{"role": "user", "content": 'Please predict 5 related topics based on above conversation. Under 10 words for each. Please reply with standard JSON array. For example:["q1", "q2", "q3", "q4", "q5"]。'}]), 
+                // "temperature": 0
             }, 
             {headers:{"Authorization": "Bearer "+api_key}})
         .then(function(resp) {
@@ -365,4 +380,4 @@ function predict_question(chat, force_refresh, compact_mode, use_proxy, api_key)
     }
 }
 
-export { normalize_msg, get_title, send_prompt, stop_streaming, try_again, predict_question }
+export { normalize_msg, get_title, send_prompt, stop_streaming, try_again, predict_question, validate_argument }

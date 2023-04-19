@@ -53,13 +53,13 @@ function new_chat() {
     });
     active_chat.value = chats[0];
     show_chat_list.value = false;
-    // this.$refs.maininput.focus();
+    document.getElementById("imaininput").focus();
 }
 
 function switch_chat(chat) {
     show_chat_list.value = false;
     active_chat.value = chat;
-    // this.$refs.maininput.focus();
+    document.getElementById("imaininput").focus();
 }
 
 function init() {

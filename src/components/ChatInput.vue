@@ -53,6 +53,7 @@ function navigate_history(direction) {
         title="提交"><i class="bi bi-send"></i>
     </button>
     <input v-if="cfg.input_mode=='singleline'||zen_mode" 
+        id="imaininput"
         style="padding-right: 40px;" 
         autocomplete="off" 
         class="form-control" 
@@ -60,7 +61,6 @@ function navigate_history(direction) {
         :disabled="edit_api_key" 
         :placeholder="edit_api_key?'尚未设置API Key':''" 
         type="text" 
-        ref="maininput" 
         v-focus 
         v-model="active_chat.new_prompt" 
         @paste="prompt_pasted" 
@@ -69,11 +69,11 @@ function navigate_history(direction) {
         @keyup.arrow-down="navigate_history(1)"
     >
     <textarea v-else 
+        id="imaininput"
         autocomplete="off" 
         class="form-control border-2" 
         :disabled="edit_api_key" 
         :placeholder="edit_api_key?'尚未设置API Key':''" 
-        ref="maininput" 
         v-focus 
         v-model="active_chat.new_prompt" 
         @keyup.ctrl.enter="send_prompt(active_chat, false, cfg.auto_title, cfg.compact_mode, cfg.use_proxy, cfg.api_key, ()=>{emit('new_msg_pushed')})" 

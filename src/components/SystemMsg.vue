@@ -1,5 +1,6 @@
 <script setup>
 import { ref } from "vue"
+import { validate_argument } from "./lib.js"
 defineProps({
     msg: Object,
     active_chat: Object,
@@ -59,7 +60,7 @@ const invalid_logitbias = ref(null);
         <div class="col-md-6">
             <label for="istop" class="form-label fw-bold w-100 clearfix">stop
                 <i class="bi bi-repeat float-end me-1 mt-1 fs-8" role="button" @click="invalid_stop=null;active_chat.arguments.stop=null" aria-label="把stop重置回默认值" title="把stop重置回默认值"></i>
-                <i v-if="active_chat.arguments.stop" class="bi bi-bug float-end me-2 mt-1 fs-8" role="button" @click="validate_argument(active_chat,'stop')" aria-label="检查stop参数格式" title="检查stop参数格式"></i>
+                <i v-if="active_chat.arguments.stop" class="bi bi-bug float-end me-2 mt-1 fs-8" role="button" @click="validate_argument(active_chat,'stop',()=>{invalid_stop=false}, ()=>{invalid_stop=true})" aria-label="检查stop参数格式" title="检查stop参数格式"></i>
             </label>
             <input type="text" class="form-control form-control-sm" :class="{'is-invalid': invalid_stop===true, 'is-valid': invalid_stop===false}" id="istop" aria-labelledby="istophelp" v-model="active_chat.arguments.stop">
             <div id="istophelp" class="form-text">
@@ -69,7 +70,7 @@ const invalid_logitbias = ref(null);
         <div class="col-md-6">
             <label for="ilogit" class="form-label fw-bold w-100 clearfix">logit_bias
                 <i class="bi bi-repeat float-end me-1 mt-1 fs-8" role="button" @click="invalid_logitbias=null;active_chat.arguments.logit_bias=null" aria-label="把logit_bias重置回默认值" title="把logit_bias重置回默认值"></i>
-                <i v-if="active_chat.arguments.logit_bias" class="bi bi-bug float-end me-2 mt-1 fs-8" role="button" @click="validate_argument(active_chat,'logit_bias')" aria-label="检查logit_bias参数格式" title="检查logit_bias参数格式"></i>
+                <i v-if="active_chat.arguments.logit_bias" class="bi bi-bug float-end me-2 mt-1 fs-8" role="button" @click="validate_argument(active_chat,'logit_bias', ()=>{invalid_logitbias=false}, ()=>{invalid_logitbias=true})" aria-label="检查logit_bias参数格式" title="检查logit_bias参数格式"></i>
             </label>
             <input type="text" class="form-control form-control-sm" :class="{'is-invalid': invalid_logitbias===true, 'is-valid': invalid_logitbias===false}" id="ilogit_bias" aria-labelledby="ilogithelp" v-model="active_chat.arguments.logit_bias">
             <div id="ilogithelp" class="form-text">

@@ -23,7 +23,6 @@ const editing_msg_backup = ref("");
 const removing_msg = ref(false);
 const editpromptinput = ref([]);
 const editprompttextarea = ref([]);
-const maininput = ref(null);
 
 const edit_api_key = computed(()=>{
     return !props.cfg.api_key
@@ -324,12 +323,12 @@ function update_prompt(msg) {
     editing_user_msg.value = null;
     editing_msg_backup.value = "";
     props.active_chat.messages.splice(msgidx + 1, props.active_chat.messages.length - msgidx - 1);
-    send_prompt(props.active_chat, true, "", props.cfg.auto_title, props.cfg.compact_mode, props.cfg.use_proxy, props.cfg.api_key, scrollToBottom);
+    send_prompt(props.active_chat, true, props.cfg.auto_title, props.cfg.compact_mode, props.cfg.use_proxy, props.cfg.api_key, scrollToBottom);
 }
 
 function select_predict_question(q) {
     props.active_chat.new_prompt = q;
-    // this.$refs.maininput.focus();
+    document.getElementById("imaininput").focus();
 }
 </script>
 <template>

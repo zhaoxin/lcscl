@@ -1,5 +1,5 @@
 <script setup>
-import { ref } from "vue"
+import { ref, nextTick } from "vue"
 const props = defineProps({
     cfg: Object,
     active_chat: Object,
@@ -17,9 +17,9 @@ function set_api_key() {
     if(props.cfg.api_key) {
         edit_api_key.value = false;
         show_api_key.value = false;
-        // nextTick(()=>{
-        //     this.$refs.maininput.focus();
-        // });
+        nextTick(()=>{
+            document.getElementById("imaininput").focus();
+        });
     }
     else {
         unset_api_key();
