@@ -4,6 +4,9 @@ import TopNav from "./components/TopNav.vue"
 import ChatList from "./components/ChatList.vue"
 import Config from "./components/Config.vue"
 import ChatUI from "./components/ChatUI.vue"
+
+const current_path = ref(window.location.pathname);
+const view_only = ref(window.location.pathname=="/view");
 const zen_mode = ref(false);
 const show_cfg_panel = ref(false);
 const show_chat_list = ref(true);
@@ -262,15 +265,18 @@ onMounted(()=>{
             <template v-if="!zen_mode">
                 <button v-if="cfg.theme=='light'" @click="switch_theme('dark')" class="float-end btn btn-sm" aria-label="切换到暗黑主题" title="切换到暗黑主题"><i class="bi bi-moon-stars"></i></button>
                 <button v-if="cfg.theme=='dark'" @click="switch_theme('light')" class="float-end btn btn-sm" aria-label="切换到明亮主题" title="切换到明亮主题"><i class="bi bi-sun"></i></button>
-                <button @click="show_cfg_panel=!show_cfg_panel" class="btn btn-sm float-end" aria-label="设置" title="设置"><i class="bi bi-gear"></i></button>
-                <button v-if="!show_cfg_panel" @click="show_chat_list=!show_chat_list" class="float-end btn btn-sm d-sm-block d-md-none" aria-label="话题列表" title="话题列表"><i class="bi bi-chat"></i></button>
+                <a v-if="view_only" class="float-end btn btn-sm" href="/"><i class="bi bi-house"></i></a>
+                <template v-else>
+                    <button @click="show_cfg_panel=!show_cfg_panel" class="btn btn-sm float-end" aria-label="设置" title="设置"><i class="bi bi-gear"></i></button>
+                    <button v-if="!show_cfg_panel" @click="show_chat_list=!show_chat_list" class="float-end btn btn-sm d-sm-block d-md-none" aria-label="话题列表" title="话题列表"><i class="bi bi-chat"></i></button>
+                </template>
             </template>
         </div>
         <TopNav :zen_mode="zen_mode" :topic="active_chat?active_chat.topic:''" :init_theme="cfg.theme"/>
         <div class="row mx-0 flex-grow-1 overflow-y-auto">
             <!-- 左侧话题列表 -->
-            <div class="pb-5 h-100 col-md-2" :class="{'border-end': !zen_mode, 'col-sm-12': show_chat_list&&!show_cfg_panel&&!zen_mode, 'd-none d-md-block': !show_chat_list||show_cfg_panel||zen_mode}">
-                <div v-if="!zen_mode" class="h-100 d-flex flex-column">
+            <div class="pb-5 h-100 col-md-2" :class="{'border-end': !zen_mode && !view_only, 'col-sm-12': show_chat_list&&!show_cfg_panel&&!zen_mode, 'd-none d-md-block': !show_chat_list||show_cfg_panel||zen_mode}">
+                <div v-if="!zen_mode && !view_only" class="h-100 d-flex flex-column">
                     <div class="w-100 mb-2 align-self-start">
                         <div class="mt-5 d-sm-block d-md-none"></div>
                         <div class="mt-3">
@@ -296,12 +302,12 @@ onMounted(()=>{
                 </div>
             </div>
             <!-- 工作区 -->
-            <div class="col-sm-12 h-100" :class="{'px-0': cfg.msg_view=='chatgpt'||zen_mode, 'd-none d-md-block col-md-8': (show_cfg_panel||show_chat_list)&&!zen_mode, 'col-md-8': zen_mode, 'col-md-10': !show_cfg_panel&&!zen_mode}">
-                <ChatUI v-if="active_chat" :cfg="cfg" :chats="chats" :active_chat="active_chat" :zen_mode="zen_mode" @all_chats_removed="new_chat" @chat_removed="(chatidx)=>active_chat=chats[chatidx]" @last_chat_removed="active_chat=chats[chats.length-1]"/>
+            <div class="col-sm-12 h-100" :class="{'px-0': cfg.msg_view=='chatgpt'||zen_mode, 'd-none d-md-block col-md-8': ((show_cfg_panel||show_chat_list)&&!zen_mode)&&!view_only, 'col-md-8': zen_mode||view_only, 'col-md-10': (!show_cfg_panel&&!zen_mode)&&!view_only}">
+                <ChatUI v-if="active_chat" :view_only="view_only" :cfg="cfg" :chats="chats" :active_chat="active_chat" :zen_mode="zen_mode" @all_chats_removed="new_chat" @chat_removed="(chatidx)=>active_chat=chats[chatidx]" @last_chat_removed="active_chat=chats[chats.length-1]"/>
             </div>
             <!-- 系统设置 -->
-            <div v-if="show_cfg_panel&&!zen_mode" class="col-md-2 gx-0 pb-3 h-100" :class="{'col-sm-12': !show_chat_list, 'border-start': !zen_mode}">
-                <div v-if="!zen_mode" class="h-100 d-flex flex-column">
+            <div v-if="(show_cfg_panel||view_only)&&!zen_mode" class="col-md-2 gx-0 pb-3 h-100" :class="{'d-none': view_only, 'col-sm-12': !view_only&&!show_chat_list, 'border-start': !view_only&&!zen_mode}">
+                <div v-if="!view_only&&!zen_mode" class="h-100 d-flex flex-column">
                     <div class="w-100 px-3 align-self-start">
                         <div class="mt-5 d-sm-block d-md-none"></div>
                         <div class="pt-1"><i class="bi bi-x" role="button" @click="show_cfg_panel=false"></i></div>

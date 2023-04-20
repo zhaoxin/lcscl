@@ -13,6 +13,7 @@ const props = defineProps({
     chats: Object,
     active_chat: Object,
     zen_mode: Boolean,
+    view_only: Boolean
 })
 
 const emit = defineEmits(["all_chats_removed", "last_chat_removed", "chat_removed"]);
@@ -334,7 +335,7 @@ function select_predict_question(q) {
 <template>
     <div class="h-100 pt-3 d-flex flex-column">
         <div class="mt-5 d-sm-block d-md-none"></div>
-        <div v-if="active_chat" class="overflow-y-auto flex-grow-1" id="iplayground" :class="cfg.msg_view=='chatgpt'||zen_mode?'px-0':'px-2'">
+        <div v-if="active_chat" class="overflow-y-auto flex-grow-1" id="iplayground" :class="{'px-0': cfg.msg_view=='chatgpt'||zen_mode, 'px-2': cfg.msg_view!='chatgpt'&&!zen_mode, 'mb-3': view_only&&zen_mode}">
             <template v-if="active_chat.messages.length > 0">
                 <template v-for="msg, msgidx in active_chat.messages">
                 <div v-if="!zen_mode||msg.role != 'system'" class="clearfix" :class="{'bg-body-tertiary': cfg.msg_view=='chatgpt'&&msgidx>0&&msgidx%2==0&&!zen_mode}">
@@ -345,7 +346,7 @@ function select_predict_question(q) {
                             <div v-else-if="msg.role=='system'" role="button" aira-label="高级参数设置" title="高级参数设置" class="me-2 bi bi-sliders float-start fs-6 align-self-start" :class="show_system_msg?'py-0':'py-0'" @click="show_system_msg=!show_system_msg"></div>
                             <div v-else class="me-2 bi bi-cpu px-1 float-start py-2 align-self-start" :class="{'fs-7': cfg.msg_view=='card', 'fs-5': cfg.msg_view!='card'}"></div>
                             <template v-if="msg.role=='system'">
-                            <SystemMsg v-if="show_system_msg" :msg="msg" :active_chat="active_chat"/>
+                            <SystemMsg v-if="show_system_msg" :msg="msg" :active_chat="active_chat" :view_only="view_only"/>
                             </template>
                             <div v-else-if="editing_user_msg===msg" class="flex-grow-1 overflow-x-auto">
                                 <input v-if="cfg.input_mode=='singleline'||zen_mode" type="text" autocomplete="off" class="form-control mw-100" ref="editpromptinput" v-model="msg.content">
@@ -361,29 +362,31 @@ function select_predict_question(q) {
                         </div>
                         <div class="clearfix" :class="non_assistant_footer_class(msg.role, msgidx==active_chat.messages.length-1)">
                             <span class="float-start" v-if="msg._ts">{{msg._ts}}</span>
-                            <template v-if="(msg.role=='user' && editing_user_msg!=msg)||msg.role=='_local'">
-                            <span v-if="removing_msg===msg" class="float-end ms-2 text-danger-emphasis">
-                                <i class="bi bi-trash me-1"></i><!-- 确定删除？ -->
-                                <i class="bi bi-check-circle me-2" style="cursor: pointer" @click="active_chat.messages.splice(msgidx, 1)"></i>
-                                <i class="bi bi-x-circle me-1" @click="removing_msg=null" style="cursor: pointer"></i>
-                            </span>
-                            <i v-else class="bi bi-trash ms-2 float-end" style="cursor: pointer" @click="removing_msg=msg"></i>
-                            <i v-if="msg.role=='user'" class="bi bi-pencil-square float-end ms-2" style="cursor: pointer" @click="prepare_update_prompt(msg)"></i>
-                            <i v-if="msg.role=='user'&&msgidx>=active_chat.messages.length-2" 
-                                class="bi bi-arrow-repeat float-end ms-5" 
-                                role="button" 
-                                @click="try_again(active_chat, msgidx, cfg.auto_title, cfg.compact_mode, cfg.use_proxy, cfg.api_key, scrollToBottom)"></i>    
+                            <template v-if="!view_only">
+                                <template v-if="(msg.role=='user' && editing_user_msg!=msg)||msg.role=='_local'">
+                                <span v-if="removing_msg===msg" class="float-end ms-2 text-danger-emphasis">
+                                    <i class="bi bi-trash me-1"></i><!-- 确定删除？ -->
+                                    <i class="bi bi-check-circle me-2" style="cursor: pointer" @click="active_chat.messages.splice(msgidx, 1)"></i>
+                                    <i class="bi bi-x-circle me-1" @click="removing_msg=null" style="cursor: pointer"></i>
+                                </span>
+                                <i v-else class="bi bi-trash ms-2 float-end" style="cursor: pointer" @click="removing_msg=msg"></i>
+                                <i v-if="msg.role=='user'" class="bi bi-pencil-square float-end ms-2" style="cursor: pointer" @click="prepare_update_prompt(msg)"></i>
+                                <i v-if="msg.role=='user'&&msgidx>=active_chat.messages.length-2" 
+                                    class="bi bi-arrow-repeat float-end ms-5" 
+                                    role="button" 
+                                    @click="try_again(active_chat, msgidx, cfg.auto_title, cfg.compact_mode, cfg.use_proxy, cfg.api_key, scrollToBottom)"></i>    
+                                </template>
+                                <span v-if="msg.role=='user' && editing_user_msg===msg" class="float-end ms-5">
+                                    <i class="bi bi-send-fill text-success" style="cursor: pointer" @click="update_prompt(msg)"></i>
+                                    <i class="bi bi-x-circle ms-2" style="cursor: pointer" @click="cancel_update_prompt"></i>
+                                </span>
                             </template>
-                            <span v-if="msg.role=='user' && editing_user_msg===msg" class="float-end ms-5">
-                                <i class="bi bi-send-fill text-success" style="cursor: pointer" @click="update_prompt(msg)"></i>
-                                <i class="bi bi-x-circle ms-2" style="cursor: pointer" @click="cancel_update_prompt"></i>
-                            </span>
                             <span v-if="msg.role=='system'&&show_system_msg">
                                 <i class="bi bi-x" role="button" aria-label="关闭高级参数面板" title="关闭高级参数面板" style="cursor: pointer" @click="show_system_msg=false"></i>
                             </span>
                         </div>
                     </div>
-                    <div v-else :class="assistant_msg_class(msgidx==active_chat.messages.length-1)" style="display: inline-block; max-width: 100%">
+                    <div v-else :class="assistant_msg_class(msgidx==active_chat.messages.length-1)" class="d-inline-block mw-100">
                         <!-- 卡片视图 -->
                         <template v-if="cfg.msg_view=='card'&&!zen_mode">
                         <div class="card-header py-1 border-success clearfix fs-7">
@@ -392,7 +395,7 @@ function select_predict_question(q) {
                         <div class="card-body" style="overflow-x: auto;">
                             <span v-if="msg._render_mode=='text' || msg._flagged===1 || msg._flagged===2" class="fs-7" :class="{'text-danger':msg._flagged===1 || msg._flagged===2}">{{msg.content}}</span>
                             <div v-else style="overflow-x: auto;" class="fs-7" v-html="purify(msg)" @click="copy_code($event)"></div>
-                            <div v-if="active_chat.stream_controller&&active_chat.arguments.stream==true&&msgidx==active_chat.messages.length-1">
+                            <div v-if="!view_only&&active_chat.stream_controller&&active_chat.arguments.stream==true&&msgidx==active_chat.messages.length-1">
                                 <i v-if="active_chat.waiting_for_resp" role="button" class="cursor-pointer text-danger bi bi-stop-fill me-1" @click="stop_streaming(active_chat)"></i>
                                 <i v-else class="text-success bi bi-check2-all"></i>
                             </div>
@@ -405,7 +408,7 @@ function select_predict_question(q) {
                                 <div class="float-start" style="overflow-x: auto; flex: 1">
                                     <div v-if="msg._render_mode=='text' || msg._flagged===1 || msg._flagged===2" class="fs-7 py-2" :class="{'text-danger':msg._flagged===1 || msg._flagged===2}">{{msg.content}}</div>
                                     <div v-else style="overflow-x: auto;" class="fs-7 py-2" v-html="purify(msg)" @click="copy_code($event)"></div>
-                                    <div v-if="active_chat.stream_controller&&active_chat.arguments.stream==true&&msgidx==active_chat.messages.length-1">
+                                    <div v-if="!view_only&&active_chat.stream_controller&&active_chat.arguments.stream==true&&msgidx==active_chat.messages.length-1">
                                         <i v-if="active_chat.waiting_for_resp" role="button" class="cursor-pointer text-danger bi bi-stop-fill me-1" @click="stop_streaming(active_chat)"></i>
                                         <i v-else class="text-success bi bi-check2-all"></i>
                                     </div>
@@ -418,12 +421,14 @@ function select_predict_question(q) {
                         </div>
                         <div class="card-footer py-2 text-secondary clearfix fs-8" :class="assistant_footer_class(msgidx==active_chat.messages.length-1)">
                             <span class="float-start">{{msg._received_ts}}</span>
-                            <span v-if="removing_msg===msg" class="float-end ms-2 text-danger-emphasis">
-                                <i class="bi bi-trash me-1"></i><!-- 确定删除？-->
-                                <i class="bi bi-check-circle me-2" style="cursor: pointer" @click="active_chat.messages.splice(msgidx, 1)"></i>
-                                <i class="bi bi-x-circle me-1" @click="removing_msg=null" style="cursor: pointer"></i>
-                            </span>
-                            <i v-else class="bi bi-trash ms-2 float-end" style="cursor: pointer" @click="removing_msg=msg"></i>
+                            <template v-if="!view_only">
+                                <span v-if="removing_msg===msg" class="float-end ms-2 text-danger-emphasis">
+                                    <i class="bi bi-trash me-1"></i><!-- 确定删除？-->
+                                    <i class="bi bi-check-circle me-2" style="cursor: pointer" @click="active_chat.messages.splice(msgidx, 1)"></i>
+                                    <i class="bi bi-x-circle me-1" @click="removing_msg=null" style="cursor: pointer"></i>
+                                </span>
+                                <i v-else class="bi bi-trash ms-2 float-end" style="cursor: pointer" @click="removing_msg=msg"></i>
+                            </template>
                             <i style="cursor: pointer" class="bi bi-clipboard float-end ms-2" @click="copy_msg($event, msg)"></i>
                             <i style="cursor: pointer" class="bi float-end ms-5" :class="msg._render_mode=='text'?'bi-blockquote-left':'bi-code-slash'" @click="msg._render_mode = msg._render_mode=='text'?'html':'text'"></i>
                         </div>
@@ -452,7 +457,7 @@ function select_predict_question(q) {
         </div>
         <div v-else class="flex-grow-1"></div>
         <div class="w-100 align-self-end" :class="{'chatgpt-msg-padding-zen': zen_mode, 'pb-3': !zen_mode, 'border-top': !edit_api_key&&!zen_mode, 'px-2': cfg.msg_view=='chatgpt'||zen_mode}">
-            <template v-if="!edit_api_key&&!zen_mode">
+            <template v-if="!view_only&&!edit_api_key&&!zen_mode">
                 <div id="ipredicts" class="fs-8" v-if="active_chat && active_chat.show_predict_questions">
                     <button class="btn btn-sm btn-link mt-2" :disabled="active_chat.waiting_for_predict" @click="predict_question(active_chat, true, cfg.compact_mode, cfg.use_proxy, cfg.api_key)">
                         <i :class="active_chat.waiting_for_predict?'spinner-grow spinner-grow-sm':'bi bi-arrow-repeat'"></i>
@@ -461,7 +466,16 @@ function select_predict_question(q) {
                 </div>
                 <ChatToolBar v-if="active_chat" :chats="chats" :active_chat="active_chat" :cfg="cfg" @all_chats_removed="emit('all_chats_removed')" @last_chat_removed="emit('last_chat_removed')" @chat_removed="(chatidx)=>emit('chat_removed', chatidx)"/>
             </template>
-            <ChatInput :cfg="cfg" :active_chat="active_chat" :zen_mode="zen_mode" @new_msg_pushed="scrollToBottom"/>
+            <ChatInput v-if="!view_only" :cfg="cfg" :active_chat="active_chat" :zen_mode="zen_mode" @new_msg_pushed="scrollToBottom"/>
+            <template v-else>
+                <div v-if="!zen_mode" class="mt-1 fs-8 text-muted fw-light clearfix w-100">
+                    <template v-if="!edit_api_key && active_chat && active_chat.used_tokens"><i class="bi bi-info-circle me-1"></i>当前话题累计消耗token：{{active_chat.used_tokens}}</template>
+                    <template v-else>
+                        <i class="bi">&nbsp;</i>
+                        <!-- <i class="bi bi-info-circle me-1"></i>关于API Key：<a href="https://platform.openai.com/account/api-keys" target="_blank" rel="noopener">https://platform.openai.com/account/api-keys<i class="ms-1 bi bi-box-arrow-up-right"></i></a> -->
+                    </template>
+                </div>
+            </template>
         </div>
     </div>
 </template>
