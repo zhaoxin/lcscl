@@ -292,6 +292,7 @@ onMounted(()=>{
                     </div>
                     <ChatList :chats="chats" :chat_filter="chat_filter" :active_chat="active_chat" @chat_switched="switch_chat"/>
                     <a class="btn" style="position: absolute; bottom: 7px; left: 2px" href="mailto:findheart@gmail.com"><i class="bi bi-headset"></i></a>
+                    <a class="btn" style="position: absolute; bottom: 7px; left: 42px" href="https://github.com/zhaoxin/lcscl" target="_blank" rel="noopener"><i class="bi bi-github"></i></a>
                 </div>
             </div>
             <!-- 工作区 -->

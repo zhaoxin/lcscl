@@ -25,8 +25,8 @@ function toggle_share(chat) {
     if(chat.share_status === 5) {
         chat.share_status = 0;
     }
-    if(this.show_share_panel && !chat.share_link) {
-        this.share_chat(chat, true);
+    if(show_share_panel.value && !chat.share_link) {
+        share_chat(chat, true);
     }
 }
 

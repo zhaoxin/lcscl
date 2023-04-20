@@ -212,7 +212,7 @@ function non_assistant_msg_class(role) {
 }
 
 function non_assistant_footer_class(role, is_bottom) {
-    if(role == "system" && !this.show_system_msg) {
+    if(role == "system" && !show_system_msg.value) {
         return "pb-0 mb-0";
     }
     else if((props.cfg && props.cfg.msg_view == "chatgpt")||props.zen_mode) {
