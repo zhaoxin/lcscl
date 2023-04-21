@@ -26,7 +26,7 @@ const editpromptinput = ref([]);
 const editprompttextarea = ref([]);
 
 const edit_api_key = computed(()=>{
-    return !props.cfg.api_key
+    return !props.cfg.api_key&&props.cfg.use_proxy!="custom"
 });
 
 function _cleanUrl(sanitize, base, href) {
@@ -324,7 +324,7 @@ function update_prompt(msg) {
     editing_user_msg.value = null;
     editing_msg_backup.value = "";
     props.active_chat.messages.splice(msgidx + 1, props.active_chat.messages.length - msgidx - 1);
-    send_prompt(props.active_chat, true, props.cfg.auto_title, props.cfg.compact_mode, props.cfg.use_proxy, props.cfg.api_key, scrollToBottom);
+    send_prompt(props.active_chat, true, props.cfg.auto_title, props.cfg.compact_mode, props.cfg.use_proxy, props.cfg.custom_api, props.cfg.api_key, scrollToBottom);
 }
 
 function select_predict_question(q) {
@@ -374,7 +374,7 @@ function select_predict_question(q) {
                                 <i v-if="msg.role=='user'&&msgidx>=active_chat.messages.length-2" 
                                     class="bi bi-arrow-repeat float-end ms-5" 
                                     role="button" 
-                                    @click="try_again(active_chat, msgidx, cfg.auto_title, cfg.compact_mode, cfg.use_proxy, cfg.api_key, scrollToBottom)"></i>    
+                                    @click="try_again(active_chat, msgidx, cfg.auto_title, cfg.compact_mode, cfg.use_proxy, cfg.custom_api, cfg.api_key, scrollToBottom)"></i>    
                                 </template>
                                 <span v-if="msg.role=='user' && editing_user_msg===msg" class="float-end ms-5">
                                     <i class="bi bi-send-fill text-success" style="cursor: pointer" @click="update_prompt(msg)"></i>
@@ -459,7 +459,7 @@ function select_predict_question(q) {
         <div class="w-100 align-self-end" :class="{'chatgpt-msg-padding-zen': zen_mode, 'pb-3': !zen_mode, 'border-top': !edit_api_key&&!zen_mode, 'px-2': cfg.msg_view=='chatgpt'||zen_mode}">
             <template v-if="!view_only&&!edit_api_key&&!zen_mode">
                 <div id="ipredicts" class="fs-8" v-if="active_chat && active_chat.show_predict_questions">
-                    <button class="btn btn-sm btn-link mt-2" :disabled="active_chat.waiting_for_predict" @click="predict_question(active_chat, true, cfg.compact_mode, cfg.use_proxy, cfg.api_key)">
+                    <button class="btn btn-sm btn-link mt-2" :disabled="active_chat.waiting_for_predict" @click="predict_question(active_chat, true, cfg.compact_mode, cfg.use_proxy, cfg.custom_api, cfg.api_key)">
                         <i :class="active_chat.waiting_for_predict?'spinner-grow spinner-grow-sm':'bi bi-arrow-repeat'"></i>
                     </button>
                     <button class="btn btn-sm btn-link border rounded-pill mt-2 me-1" style="color: var(--bs-secondary-text); background-color: var(--bs-secondary-bg-subtle); border-color: var(--bs-secondary-border-subtle)" v-for="pq in active_chat.predict_questions" @click="select_predict_question(pq)">{{pq}}</button>

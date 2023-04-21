@@ -14,7 +14,7 @@ const confirming_stop_share = ref(false);
 const show_share_panel = ref(false);
 
 const edit_api_key = computed(()=>{
-    return !props.cfg.api_key
+    return !props.cfg.api_key&&props.cfg.use_proxy!="custom"
 });
 
 function toggle_share(chat) {
@@ -129,10 +129,10 @@ function copy_share_link(link_code) {
         </div>
     </div>
     <div id="itoolbar" class="py-1 clearfix">
-        <button v-if="cfg.auto_title=='manual'" aria-label="调用模型为当前话题总结命名" title="调用模型为当前话题总结命名" :disabled="active_chat.waiting_for_title || active_chat.messages.length < 3" class="px-1 btn btn-sm btn-link" @click="get_title(active_chat, cfg.compact_mode, cfg.use_proxy, cfg.api_key)">
+        <button v-if="cfg.auto_title=='manual'" aria-label="调用模型为当前话题总结命名" title="调用模型为当前话题总结命名" :disabled="active_chat.waiting_for_title || active_chat.messages.length < 3" class="px-1 btn btn-sm btn-link" @click="get_title(active_chat, cfg.compact_mode, cfg.use_proxy, cfg.custom_api, cfg.api_key)">
             <i class="me-1" :class="active_chat.waiting_for_title?'spinner-grow spinner-grow-sm':'bi bi-card-heading'"></i>命名
         </button>
-        <button :disabled="active_chat.waiting_for_predict || active_chat.messages.length < 3" aria-label="调用模型联想更多关联话题" title="调用模型联想更多关联话题" class="px-1 btn btn-sm btn-link" @click="predict_question(active_chat, false, cfg.compact_mode, cfg.use_proxy, cfg.api_key)">
+        <button :disabled="active_chat.waiting_for_predict || active_chat.messages.length < 3" aria-label="调用模型联想更多关联话题" title="调用模型联想更多关联话题" class="px-1 btn btn-sm btn-link" @click="predict_question(active_chat, false, cfg.compact_mode, cfg.use_proxy, cfg.custom_api, cfg.api_key)">
             <i class="me-1" :class="active_chat.waiting_for_predict?'spinner-grow spinner-grow-sm':'bi bi-lightbulb'"></i>联想
         </button>
         <button :disabled="active_chat.waiting_for_resp || active_chat.messages.length < 2" class="px-1 btn btn-sm btn-link" @click="toggle_share(active_chat)">

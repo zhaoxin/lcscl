@@ -102,7 +102,31 @@ function compose_arguments(chat, compact_mode) {
     return arg2use
 }
 
-function get_title(chat, compact_mode, use_proxy, api_key) {
+function get_chat_api(use_proxy, custom_api) {
+    if(use_proxy == "openai") {
+        return "https://api.openai.com/v1/chat/completions"
+    }
+    else if(use_proxy == "custom" && custom_api) {
+        return custom_api
+    }
+    else {
+        return "https://api.lcscl.net"
+    }
+}
+
+function get_stream_api(use_proxy, custom_api) {
+    if(use_proxy == "openai") {
+        return "https://api.openai.com/v1/chat/completions"
+    }
+    else if(use_proxy == "custom" && custom_api) {
+        return custom_api
+    }
+    else {
+        return "https://stream.lcscl.net"
+    }
+}
+
+function get_title(chat, compact_mode, use_proxy, custom_api, api_key) {
     // this.confirming_remove_chat = false;
     // this.confirming_clear_chat = false;
     // this.show_share_panel = false;
@@ -111,7 +135,7 @@ function get_title(chat, compact_mode, use_proxy, api_key) {
     if(!chat.waiting_for_title && round_count > 0) {
         chat.waiting_for_title = true;
         axios.post(
-            use_proxy=="openai"?"https://api.openai.com/v1/chat/completions":"https://api.lcscl.net", 
+            get_chat_api(use_proxy, custom_api), 
             {
                 "model": "gpt-3.5-turbo", "messages": cntxt.concat([{"role": "user", "content": "Please give this conversation a title in less than 10 words. Without any punctuation."}]), 
                 // "temperature": 0
@@ -170,13 +194,13 @@ function stop_streaming(chat) {
     chat.waiting_for_resp = false;
 }
 
-function stream_prompt(chat, auto_title, compact_mode, use_proxy, api_key, new_msg_callback) {
+function stream_prompt(chat, auto_title, compact_mode, use_proxy, custom_api, api_key, new_msg_callback) {
     var new_answer = "";
     var counter = 0
     const msgidx = chat.messages.length;
     chat.stream_controller = new AbortController();
     fetchEventSource(
-        use_proxy=="openai"?"https://api.openai.com/v1/chat/completions":"https://stream.lcscl.net", 
+        get_stream_api(use_proxy, custom_api), 
         {
             method: "POST",
             body: JSON.stringify(compose_arguments(chat, compact_mode)), 
@@ -225,7 +249,7 @@ function stream_prompt(chat, auto_title, compact_mode, use_proxy, api_key, new_m
                     // 自动命名
                     const round_count = chat.messages.filter(m=>m.role=="assistant").length;
                     if(auto_title == "allr" || (auto_title == "first3r" && round_count > 0 && round_count <= 3)) {
-                        get_title(chat, compact_mode, use_proxy, api_key);
+                        get_title(chat, compact_mode, use_proxy, custom_api, api_key);
                     }
                 }
                 nextTick(new_msg_callback);
@@ -244,7 +268,7 @@ function stream_prompt(chat, auto_title, compact_mode, use_proxy, api_key, new_m
     );
 }
 
-function send_prompt(chat, is_retry, auto_title, compact_mode, use_proxy, api_key, new_msg_callback) {
+function send_prompt(chat, is_retry, auto_title, compact_mode, use_proxy, custom_api, api_key, new_msg_callback) {
     if((chat.new_prompt || is_retry) && !chat.waiting_for_resp) {
         chat.waiting_for_resp = true;
         if(!is_retry) {
@@ -256,11 +280,11 @@ function send_prompt(chat, is_retry, auto_title, compact_mode, use_proxy, api_ke
         send_moderation(chat.messages[chat.messages.length - 1], use_proxy, api_key);
         nextTick(new_msg_callback);
         if(chat.arguments.stream) {
-            stream_prompt(chat, auto_title, compact_mode, use_proxy, api_key, new_msg_callback);
+            stream_prompt(chat, auto_title, compact_mode, use_proxy, custom_api, api_key, new_msg_callback);
         }
         else {
             axios.post(
-                use_proxy=="openai"?"https://api.openai.com/v1/chat/completions":"https://api.lcscl.net", 
+                get_chat_api(use_proxy, custom_api), 
                 compose_arguments(chat, compact_mode), 
                 {headers:{"Authorization": "Bearer "+api_key}})
             .then(function(resp) {
@@ -280,7 +304,7 @@ function send_prompt(chat, is_retry, auto_title, compact_mode, use_proxy, api_ke
                     send_moderation(chat.messages[chat.messages.length - 1], use_proxy, api_key);
                     // 自动命名
                     if(auto_title == "allr" || (auto_title == "first3r" && round_count > 0 && round_count <= 3)) {
-                        get_title(chat, compact_mode, use_proxy, api_key);
+                        get_title(chat, compact_mode, use_proxy, custom_api, api_key);
                     }
                 }
             })
@@ -300,7 +324,7 @@ function send_prompt(chat, is_retry, auto_title, compact_mode, use_proxy, api_ke
     }
 }
 
-function try_again(chat, msgidx, auto_title, compact_mode, use_proxy, api_key, new_msg_callback) {
+function try_again(chat, msgidx, auto_title, compact_mode, use_proxy, custom_api, api_key, new_msg_callback) {
     // this.confirming_remove_chat = false;
     // this.confirming_clear_chat = false;
     // this.show_share_panel = false;
@@ -321,10 +345,10 @@ function try_again(chat, msgidx, auto_title, compact_mode, use_proxy, api_key, n
     if(last_user_msg > -1) {
         chat.messages.splice(last_user_msg + 1, chat.messages.length - last_user_msg - 1);
     }
-    send_prompt(chat, true, auto_title, compact_mode, use_proxy, api_key, new_msg_callback);
+    send_prompt(chat, true, auto_title, compact_mode, use_proxy, custom_api, api_key, new_msg_callback);
 }
 
-function predict_question(chat, force_refresh, compact_mode, use_proxy, api_key) {
+function predict_question(chat, force_refresh, compact_mode, use_proxy, custom_api, api_key) {
     // this.confirming_remove_chat = false;
     // this.confirming_clear_chat = false;
     // this.show_share_panel = false;
@@ -348,7 +372,7 @@ function predict_question(chat, force_refresh, compact_mode, use_proxy, api_key)
     if(!chat.waiting_for_predict && round_count > 0) {
         chat.waiting_for_predict = true;
         axios.post(
-            use_proxy=="openai"?"https://api.openai.com/v1/chat/completions":"https://api.lcscl.net", 
+            get_chat_api(use_proxy, custom_api), 
             {
                 "model": "gpt-3.5-turbo", "messages": cntxt.concat([{"role": "user", "content": 'Please predict 5 related topics based on above conversation. Under 10 words for each. Please reply with standard JSON array. For example:["q1", "q2", "q3", "q4", "q5"]。'}]), 
                 // "temperature": 0

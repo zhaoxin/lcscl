@@ -4,6 +4,7 @@ import TopNav from "./components/TopNav.vue"
 import ChatList from "./components/ChatList.vue"
 import Config from "./components/Config.vue"
 import ChatUI from "./components/ChatUI.vue"
+import axios from "axios"
 
 const current_path = ref(window.location.pathname);
 const view_only = ref(window.location.pathname=="/view");
@@ -22,6 +23,7 @@ const cfg = reactive({
     robot_avatar: '🤖',
     api_key: "",
     use_proxy: "proxy",
+    custom_api: "",
     auto_title: "manual",
     compact_mode: false,
     input_mode: "singleline",
@@ -75,6 +77,9 @@ function init() {
     }
     if(saved_cfg) {
         Object.assign(cfg, saved_cfg);
+        if(!cfg.custom_api) {
+            cfg.custom_api = "";
+        }
     }
     else {
         show_cfg_panel.value = true;
@@ -118,9 +123,6 @@ function init() {
         });
     }
     for(var i=0; i<chats.length; i++) {
-        if(!chats[i].new_prompt) {
-            chats[i].new_prompt = "";
-        }
         chats[i].waiting_for_resp = false;
         chats[i].waiting_for_title = false;
         chats[i].waiting_for_predict = false;
@@ -144,9 +146,70 @@ function init() {
     }
     switch_theme(cfg.theme);
     active_chat.value = chats[0];
-    if(!cfg.api_key) {
+    if(!cfg.api_key&&cfg.use_proxy!='custom') {
         show_cfg_panel.value = true;
     }
+}
+
+function init_viewer() {
+    show_cfg_panel.value = false;
+    // 从服务器获取share_code对应的对话数据
+    const q = new URLSearchParams(window.location.search);
+    const share_code = q.get("share_code");
+    if(!share_code) {
+        return
+    }
+    axios.get("https://share.lcscl.net?share_code="+share_code)
+    .then(function(resp) {
+        const shared_obj = resp.data;
+        if(shared_obj.cfg) {
+            if(shared_obj.cfg.theme) {
+                cfg.theme = shared_obj.cfg.theme;
+            }
+            if(shared_obj.cfg.human_avatar) {
+                cfg.human_avatar = shared_obj.cfg.human_avatar;
+            }
+            if(shared_obj.cfg.robot_avatar) {
+                cfg.robot_avatar = shared_obj.cfg.robot_avatar;
+            }
+            if(shared_obj.cfg.msg_view) {
+                cfg.msg_view = shared_obj.cfg.msg_view;
+            }
+            switch_theme(cfg.theme);
+        }
+        chats.push(shared_obj.chat);
+        for(var i=0; i<chats.length; i++) {
+            chats[i].waiting_for_resp = false;
+            chats[i].waiting_for_title = false;
+            chats[i].waiting_for_predict = false;
+            if(!chats[i].arguments) {
+                chats[i].arguments = {
+                    model: "gpt-3.5-turbo",
+                    temperature: 1,
+                    top_p: 1,
+                    n: 1,
+                    stream: false,
+                    stop: null,
+                    max_tokens: 0, // inf
+                    presence_penalty: 0,
+                    frequency_penalty: 0,
+                    logit_bias: null,
+                    user: null
+                };
+            }
+        }
+        active_chat.value = chats[0];
+    })
+    .catch(function(err) {
+        if(err.response) {
+            alert(err.response.data);
+        }
+        else {
+            alert(err.message);
+        }
+    })
+    .then(function() {});
+    switch_theme(cfg.theme);
 }
 
 function switch_theme(tv) {
@@ -226,32 +289,41 @@ function export_chats(mode) {
     downloadLink.click();
 }
 
-watch(chats, (nv, ov)=>{
-    try {
-        localStorage.setItem("lcscl_chats", JSON.stringify(nv));
-    }
-    catch(err) {
-        if(err=="QUOTA_EXCEEDED_ERR") {
-            console.error("浏览器存储空间已满。");
+if(!view_only.value) {
+    watch(chats, (nv, ov)=>{
+        try {
+            localStorage.setItem("lcscl_chats", JSON.stringify(nv));
         }
-    }
-    space_used.value = (decodeURIComponent(encodeURIComponent(JSON.stringify(localStorage))).length / 1024 / 1024).toFixed(2);
-});
+        catch(err) {
+            if(err=="QUOTA_EXCEEDED_ERR") {
+                console.error("浏览器存储空间已满。");
+            }
+        }
+        space_used.value = (decodeURIComponent(encodeURIComponent(JSON.stringify(localStorage))).length / 1024 / 1024).toFixed(2);
+    });
 
-watch(cfg, (nv, ov)=>{
-    try {
-        localStorage.setItem("lcscl_cfg", JSON.stringify(nv));
-    }
-    catch(err) {
-        if(err=="QUOTA_EXCEEDED_ERR") {
-            console.error("浏览器存储空间已满。");
+    watch(cfg, (nv, ov)=>{
+        try {
+            localStorage.setItem("lcscl_cfg", JSON.stringify(nv));
         }
-    }
-    space_used.value = (decodeURIComponent(encodeURIComponent(JSON.stringify(localStorage))).length / 1024 / 1024).toFixed(2);  
-})
+        catch(err) {
+            if(err=="QUOTA_EXCEEDED_ERR") {
+                console.error("浏览器存储空间已满。");
+            }
+        }
+        space_used.value = (decodeURIComponent(encodeURIComponent(JSON.stringify(localStorage))).length / 1024 / 1024).toFixed(2);  
+    });
+}
 
 onMounted(()=>{
-    init();
+    if(view_only.value) {
+        console.log("init viewer")
+        init_viewer();
+    }
+    else {
+        console.log("init")
+        init();
+    }
 });
 
 </script>

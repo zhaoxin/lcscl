@@ -12,9 +12,9 @@ const show_api_key = ref(false);
 const show_title_help = ref(false);
 const show_compact_help = ref(false);
 const show_input_help = ref(false);
-const edit_api_key = ref(props.cfg.api_key?false:true);
+const edit_api_key = ref(props.cfg.api_key||props.cfg.use_proxy=='custom'?false:true);
 function set_api_key() {
-    if(props.cfg.api_key) {
+    if(props.cfg.api_key || props.cfg.use_proxy=="custom") {
         edit_api_key.value = false;
         show_api_key.value = false;
         nextTick(()=>{
@@ -27,7 +27,9 @@ function set_api_key() {
 }
 function unset_api_key() {
     props.cfg.api_key = "";
-    edit_api_key.value = true;
+    if(props.cfg.use_proxy!="custom") {
+        edit_api_key.value = true;
+    }
     show_api_key.value = false;
 }
 </script>
@@ -69,7 +71,9 @@ function unset_api_key() {
         <select class="form-select form-select-sm" v-model="cfg.use_proxy">
             <option value="openai">直连OpenAI</option>
             <option value="proxy">本站代理</option>
+            <option value="custom">自定义API</option>
         </select>
+        <input v-if="cfg.use_proxy=='custom'" type="text" v-focus class="mt-2 form-control form-control-sm" id="icustomapi" v-model="cfg.custom_api" maxlength="1024">
         <div class="h6 fw-bold mt-5 mb-2 pb-1 clearfix">自动命名<i v-if="cfg.auto_title=='manual'" class="float-end bi bi-question-circle" role="button" @click="show_title_help=!show_title_help"></i></div>
         <div v-if="show_title_help || cfg.auto_title != 'manual'" class="alert alert-warning fs-8">自动命名会成倍消耗点数，请酌情使用。你可以选择手动模式，在对话进行到合适的阶段点击输入框上方的“总结命名”。</div>
         <select class="form-select form-select-sm" v-model="cfg.auto_title">
