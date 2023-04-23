@@ -386,7 +386,7 @@ onMounted(()=>{
                         <div class="mt-5 d-sm-block d-md-none"></div>
                         <div class="pt-1"><i class="bi bi-x" role="button" @click="show_cfg_panel=false"></i></div>
                     </div>
-                    <Config :cfg="cfg" :active_chat="active_chat" @export_all="export_chats(0)" @export_current="export_chats(1)"/>
+                    <Config :cfg="cfg" :active_obj="active_chat" @export_all="export_chats(0)" @export_current="export_chats(1)"/>
                 </div>
             </div>
         </div>

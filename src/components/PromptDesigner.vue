@@ -4,7 +4,6 @@ import ChatUI from "./ChatUI.vue"
 import { send_prompt } from "./lib.js"
 
 const props = defineProps({
-    max_preview_panel: Boolean,
     active_prompt: Object,
     prompts: Object,
     cfg: Object,
@@ -12,12 +11,9 @@ const props = defineProps({
 });
 const emit = defineEmits(["all_prompts_removed", "last_prompt_removed", "prompt_removed"]);
 
-const confirming_remove_prompt = ref(false);
-const test_chat = ref(null);
-
 
 function remove_prompt(prompt) {
-    confirming_remove_prompt.value = false;
+    props.active_prompt.confirming_remove_prompt = false;
     const idx = props.prompts.indexOf(prompt);
     props.prompts.splice(idx, 1);
     if(props.prompts.length < 1) {
@@ -32,12 +28,12 @@ function remove_prompt(prompt) {
 }
 
 function run_test(p) {
-    test_chat.value = {topic: "test", messages: JSON.parse(JSON.stringify(p.messages)), arguments: JSON.parse(JSON.stringify(p.arguments))};
-    if(test_chat.value.messages[test_chat.value.messages.length-1].role == "user") {
-        test_chat.value.messages[test_chat.value.messages.length-1]._ts = (new Date()).toLocaleString();
+    props.active_prompt.test_chat = {topic: "test", messages: JSON.parse(JSON.stringify(p.messages)), arguments: JSON.parse(JSON.stringify(p.arguments))};
+    if(props.active_prompt.test_chat.messages[props.active_prompt.test_chat.messages.length-1].role == "user") {
+        props.active_prompt.test_chat.messages[props.active_prompt.test_chat.messages.length-1]._ts = (new Date()).toLocaleString();
     }
-    test_chat.value.used_tokens = 0;
-    send_prompt(test_chat.value, true, "manual", false, props.cfg.use_proxy, props.cfg.custom_api, props.cfg.api_key, scrollToBottom);
+    props.active_prompt.test_chat.used_tokens = 0;
+    send_prompt(props.active_prompt.test_chat, true, "manual", false, props.cfg.use_proxy, props.cfg.custom_api, props.cfg.api_key, scrollToBottom);
 }
 
 function scrollToBottom() {
@@ -46,9 +42,27 @@ function scrollToBottom() {
         pg.scrollTop = pg.scrollHeight;
     }
 }
+
+function builder_class() {
+    if(props.show_cfg_panel) {
+        return props.active_prompt.test_chat?'col-md-4 col-sm-12 border-end':'col-md-8 col-sm-12'
+    }
+    else {
+        return props.active_prompt.test_chat?'col-md-5 col-sm-12 border-end':'col-md-10 col-sm-12'
+    }
+}
+
+function tester_class() {
+    if(props.show_cfg_panel) {
+        return props.active_prompt.max_preview_panel?'col-md-8 col-sm-12':'col-md-4 col-sm-12'
+    }
+    else {
+        return props.active_prompt.max_preview_panel?'col-md-10 col-sm-12':'col-md-5 col-sm-12'
+    }
+}
 </script>
 <template>
-    <div v-if="!max_preview_panel || !test_chat" class="h-100 py-3" :class="test_chat?'col-md-4 col-sm-6':'col-md-8 col-sm-12'">
+    <div v-if="!active_prompt.max_preview_panel || !active_prompt.test_chat" class="h-100 py-3" :class="builder_class()">
         <div v-if="active_prompt" class="h-100 d-flex flex-column">
             <div class="w-100 align-self-start">
                 <h5 class="pb-2 fw-bold clearfix">指令设计
@@ -57,14 +71,14 @@ function scrollToBottom() {
                         @click="run_test(active_prompt)">
                         <i class="bi bi-play me-1"></i>测试
                     </button>
-                    <button v-if="confirming_remove_prompt" class="float-end btn btn-sm btn-outline-danger me-2" @click="confirming_remove_prompt=false">
+                    <button v-if="active_prompt.confirming_remove_prompt" class="float-end btn btn-sm btn-outline-danger me-2" @click="active_prompt.confirming_remove_prompt=false">
                         <i class="bi bi-x-lg"></i>
                     </button>
-                    <button v-if="confirming_remove_prompt" class="float-end btn btn-sm btn-outline-danger me-2" @click="remove_prompt(active_prompt)">
+                    <button v-if="active_prompt.confirming_remove_prompt" class="float-end btn btn-sm btn-outline-danger me-2" @click="remove_prompt(active_prompt)">
                         <i class="bi bi-check-lg"></i>
                     </button>
-                    <button class="float-end btn btn-sm btn-outline-danger me-2" @click="confirming_remove_prompt=true">
-                        <i class="bi bi-trash me-1"></i>{{ confirming_remove_prompt?'确认删除？':'删除' }}
+                    <button class="float-end btn btn-sm btn-outline-danger me-2" @click="active_prompt.confirming_remove_prompt=true">
+                        <i class="bi bi-trash me-1"></i>{{ active_prompt.confirming_remove_prompt?'确认删除？':'删除' }}
                     </button>
                 </h5>
             </div>
@@ -129,13 +143,13 @@ function scrollToBottom() {
             </div>
         </div>
     </div>
-    <div v-if="test_chat" class="h-100 py-3 d-flex flex-column" :class="max_preview_panel?'col-md-7 col-sm-12':'col-md-4 col-sm-6'">
+    <div v-if="active_prompt.test_chat" class="h-100 py-3 d-flex flex-column" :class="tester_class()">
         <div class="clearfix">
             <button class="btn btn-sm text-secondary-emphasis float-start" @click="run_test(active_prompt)"><i class="bi bi-arrow-repeat"></i></button>
-            <button class="btn btn-sm text-secondary-emphasis float-start" @click="test_chat=null"><i class="bi bi-x-lg"></i></button>
-            <button class="btn btn-sm text-secondary-emphasis float-end" @click="max_preview_panel=!max_preview_panel"><i class="bi" :class="max_preview_panel?'bi-layout-sidebar':'bi-layout-sidebar-inset'"></i></button>
+            <button class="btn btn-sm text-secondary-emphasis float-start" @click="active_prompt.test_chat=null"><i class="bi bi-x-lg"></i></button>
+            <button class="btn btn-sm text-secondary-emphasis float-end" @click="active_prompt.max_preview_panel=!active_prompt.max_preview_panel"><i class="bi" :class="active_prompt.max_preview_panel?'bi-layout-sidebar':'bi-layout-sidebar-inset'"></i></button>
         </div>
-        <ChatUI :view_only="false" :cfg="cfg" :chats="[test_chat]" :active_chat="test_chat" :zen_mode="false"/>
+        <ChatUI :view_only="false" :cfg="cfg" :chats="[active_prompt.test_chat]" :active_chat="active_prompt.test_chat" :zen_mode="false"/>
     </div>
 </template>
 <style scoped>

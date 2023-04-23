@@ -150,7 +150,7 @@ function get_title(chat, compact_mode, use_proxy, custom_api, api_key) {
             }
         })
         .catch(function(err) {
-            console.log(err.message);
+            console.error(err.message);
         })
         .then(function(){
             chat.waiting_for_title = false;
@@ -396,7 +396,7 @@ function predict_question(chat, force_refresh, compact_mode, use_proxy, custom_a
             }
         })
         .catch(function(err) {
-            console.log(err.message);
+            console.error(err.message);
         })
         .then(function(){
             chat.waiting_for_predict = false;

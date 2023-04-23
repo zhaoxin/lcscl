@@ -2,7 +2,7 @@
 import { ref, nextTick } from "vue"
 const props = defineProps({
     cfg: Object,
-    active_chat: Object,
+    active_obj: Object,
 });
 defineEmits(["export_all", "export_current"]);
 const show_export_help = ref(false);
@@ -41,7 +41,7 @@ function unset_api_key() {
             <button class="btn btn-sm btn-link" @click="$emit('export_all')">
                 <i class="bi bi-download me-1"></i>所有话题
             </button>
-            <button v-if="active_chat" class="btn btn-sm btn-link" @click="$emit('export_current')">
+            <button v-if="active_obj" class="btn btn-sm btn-link" @click="$emit('export_current')">
                 <i class="bi bi-download me-1"></i>当前话题
             </button>
         </div>

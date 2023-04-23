@@ -15,7 +15,6 @@ const space_used = ref(0);
 const prompt_apps = reactive([]);
 const prompt_filter = ref("");
 const active_prompt = ref(null);
-const max_preview_panel = ref(false);
 const cfg = reactive({
     theme: "light",
     human_avatar: '❓',
@@ -59,7 +58,15 @@ function new_prompt_app() {
 function switch_prompt(prompt) {
     show_prompt_list.value = false;
     active_prompt.value = prompt;
-    max_preview_panel.value = false;
+    if(active_prompt.value.confirming_remove_prompt === undefined) {
+        active_prompt.value.confirming_remove_prompt = false;
+    }
+    if(active_prompt.value.test_chat === undefined) {
+        active_prompt.value.test_chat = null;
+    }
+    if(active_prompt.value.max_preview_panel === undefined) {
+        active_prompt.value.max_preview_panel = false;
+    }
 }
 
 function init() {
@@ -264,7 +271,7 @@ onMounted(()=>{
                 </div>
             </div>
             <!-- 工作区 -->
-            <PromptDesigner v-if="active_prompt" :show_cfg_panel="show_cfg_panel" :max_preview_panel="max_preview_panel" :cfg="cfg" :prompts="prompt_apps" :active_prompt="active_prompt" @all_prompts_removed="new_prompt_app" @prompt_removed="(promptidx)=>active_prompt=prompt_apps[promptidx]" @last_prompt_removed="active_prompt=prompt_apps[prompt_apps.length-1]"/>
+            <PromptDesigner v-if="active_prompt" :show_cfg_panel="show_cfg_panel" :cfg="cfg" :prompts="prompt_apps" :active_prompt="active_prompt" @all_prompts_removed="new_prompt_app" @prompt_removed="(promptidx)=>active_prompt=prompt_apps[promptidx]" @last_prompt_removed="active_prompt=prompt_apps[prompt_apps.length-1]"/>
             <!-- 系统设置 -->
             <div v-if="show_cfg_panel" class="col-md-2 gx-0 pb-3 h-100 border-start" :class="{'col-sm-12': !show_prompt_list}">
                 <div class="h-100 d-flex flex-column">
@@ -272,7 +279,7 @@ onMounted(()=>{
                         <div class="mt-5 d-sm-block d-md-none"></div>
                         <div class="pt-1"><i class="bi bi-x" role="button" @click="show_cfg_panel=false"></i></div>
                     </div>
-                    <Config :cfg="cfg" :active_chat="active_chat" @export_all="export_chats(0)" @export_current="export_chats(1)"/>
+                    <Config :cfg="cfg" :active_obj="active_prompt" @export_all="export_prompts(0)" @export_current="export_prompts(1)"/>
                 </div>
             </div>
         </div>
