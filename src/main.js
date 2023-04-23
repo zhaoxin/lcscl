@@ -1,5 +1,6 @@
-import { createApp, nextTick } from 'vue'
-import App from './App.vue'
+import { createApp, nextTick } from "vue"
+import App from "./App.vue"
+import Studio from "./Studio.vue"
 
 if ('serviceWorker' in navigator) {
     window.addEventListener('load', () => {
@@ -7,7 +8,7 @@ if ('serviceWorker' in navigator) {
     });
 }
 
-const app = createApp(App);
+const app = createApp(window.location.pathname=="/prompts"?Studio:App);
 app.directive("focus", {
     mounted: (el)=> {
         nextTick(()=>{

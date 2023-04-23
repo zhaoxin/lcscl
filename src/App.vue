@@ -123,6 +123,9 @@ function init() {
         });
     }
     for(var i=0; i<chats.length; i++) {
+        if(!chats[i].new_prompt) {
+            chats[i].new_prompt = "";
+        }
         chats[i].waiting_for_resp = false;
         chats[i].waiting_for_title = false;
         chats[i].waiting_for_predict = false;
@@ -317,11 +320,9 @@ if(!view_only.value) {
 
 onMounted(()=>{
     if(view_only.value) {
-        console.log("init viewer")
         init_viewer();
     }
     else {
-        console.log("init")
         init();
     }
 });
@@ -371,6 +372,7 @@ onMounted(()=>{
                     <ChatList :chats="chats" :chat_filter="chat_filter" :active_chat="active_chat" @chat_switched="switch_chat"/>
                     <a class="btn" style="position: absolute; bottom: 7px; left: 2px" href="mailto:findheart@gmail.com"><i class="bi bi-headset"></i></a>
                     <a class="btn" style="position: absolute; bottom: 7px; left: 42px" href="https://github.com/zhaoxin/lcscl" target="_blank" rel="noopener"><i class="bi bi-github"></i></a>
+                    <a class="btn" style="position: absolute; bottom: 7px; left: 82px" href="/prompts"><i class="bi bi-magic"></i></a>
                 </div>
             </div>
             <!-- 工作区 -->
