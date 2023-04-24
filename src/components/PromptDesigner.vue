@@ -1,6 +1,7 @@
 <script setup>
 import { ref } from "vue"
 import ChatUI from "./ChatUI.vue"
+import SystemMsg from "./SystemMsg.vue"
 import { send_prompt } from "./lib.js"
 
 const props = defineProps({
@@ -11,6 +12,7 @@ const props = defineProps({
 });
 const emit = defineEmits(["all_prompts_removed", "last_prompt_removed", "prompt_removed"]);
 
+const show_params = ref(false);
 
 function remove_prompt(prompt) {
     props.active_prompt.confirming_remove_prompt = false;
@@ -82,14 +84,14 @@ function tester_class() {
                     </button>
                 </h5>
             </div>
-            <div style="flex: 1; overflow-y: auto;">
-                <div class="row mb-3 g-2 mx-0">
+            <div class="flex-grow-1 overflow-y-auto">
+                <div class="row mb-4 g-2 mx-0">
                     <div class="col">
                         <label class="form-label fw-bold" for="iprptname">名称</label>
                         <input id="iprptname" type="text" class="form-control form-control" v-model="active_prompt.name">
                     </div>
                 </div>
-                <div class="row mb-3 g-2 mx-0">
+                <div class="row mb-4 g-2 mx-0">
                     <div class="col">
                         <label class="form-label fw-bold" for="iprpticon">图标</label>
                         <input id="iprpticon" type="text" class="form-control form-control" v-model="active_prompt.icon">
@@ -140,6 +142,12 @@ function tester_class() {
                         <button class="btn text-danger-emphasis" @click="active_prompt.workflow.splice(nidx, 1)"><i class="bi bi-dash-circle"></i></button>
                     </div>
                 </div>
+                <div class="row mt-3 g-2 mx-0">
+                    <div class="col">
+                        <label class="form-label fw-bold">API参数<i class="bi ms-1" :class="show_params?'bi-caret-down-fill':'bi-caret-right-fill'" role="button" @click="show_params=!show_params"></i></label>
+                    </div>
+                </div>
+                <SystemMsg v-if="show_params" :params_only="true" :msg="null" :active_chat="active_prompt" :view_only="false"/>
             </div>
         </div>
     </div>
@@ -149,7 +157,7 @@ function tester_class() {
             <button class="btn btn-sm text-secondary-emphasis float-start" @click="active_prompt.test_chat=null"><i class="bi bi-x-lg"></i></button>
             <button class="btn btn-sm text-secondary-emphasis float-end" @click="active_prompt.max_preview_panel=!active_prompt.max_preview_panel"><i class="bi" :class="active_prompt.max_preview_panel?'bi-layout-sidebar':'bi-layout-sidebar-inset'"></i></button>
         </div>
-        <ChatUI :view_only="false" :cfg="cfg" :chats="[active_prompt.test_chat]" :active_chat="active_prompt.test_chat" :zen_mode="false"/>
+        <ChatUI :view_only="true" :allow_input="true" :show_params="false" :cfg="cfg" :chats="[active_prompt.test_chat]" :active_chat="active_prompt.test_chat" :zen_mode="false"/>
     </div>
 </template>
 <style scoped>

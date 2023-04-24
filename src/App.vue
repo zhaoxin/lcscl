@@ -377,7 +377,7 @@ onMounted(()=>{
             </div>
             <!-- 工作区 -->
             <div class="col-sm-12 h-100" :class="{'px-0': cfg.msg_view=='chatgpt'||zen_mode, 'd-none d-md-block col-md-8': ((show_cfg_panel||show_chat_list)&&!zen_mode)&&!view_only, 'col-md-8': zen_mode||view_only, 'col-md-10': (!show_cfg_panel&&!zen_mode)&&!view_only}">
-                <ChatUI v-if="active_chat" :view_only="view_only" :cfg="cfg" :chats="chats" :active_chat="active_chat" :zen_mode="zen_mode" @all_chats_removed="new_chat" @chat_removed="(chatidx)=>active_chat=chats[chatidx]" @last_chat_removed="active_chat=chats[chats.length-1]"/>
+                <ChatUI v-if="active_chat" :view_only="view_only" :allow_input="!view_only" :show_params="true" :cfg="cfg" :chats="chats" :active_chat="active_chat" :zen_mode="zen_mode" @all_chats_removed="new_chat" @chat_removed="(chatidx)=>active_chat=chats[chatidx]" @last_chat_removed="active_chat=chats[chats.length-1]"/>
             </div>
             <!-- 系统设置 -->
             <div v-if="(show_cfg_panel||view_only)&&!zen_mode" class="col-md-2 gx-0 pb-3 h-100" :class="{'d-none': view_only, 'col-sm-12': !view_only&&!show_chat_list, 'border-start': !view_only&&!zen_mode}">

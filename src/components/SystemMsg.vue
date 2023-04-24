@@ -4,21 +4,23 @@ import { validate_argument } from "./lib.js"
 defineProps({
     msg: Object,
     active_chat: Object,
-    view_only: Boolean
+    view_only: Boolean,
+    params_only: Boolean
 });
 const invalid_stop = ref(null);
 const invalid_logitbias = ref(null);
-const null_value = ref("null");
 </script>
 <template>
-    <form class="row g-3 ps-2 pb-2">
-        <div class="col-12 fw-bold">{{view_only?'当前对话使用参数：':'如果不理解参数含义，请使用默认值'}}</div>
-        <div class="col-12">
-            <label for="isysmsg" class="form-label fw-bold w-100 clearfix">system prompt
-                <i v-if="!view_only" class="bi bi-repeat float-end me-1 mt-1 fs-8" role="button" @click="msg.content='You are a helpful assistant.'" aria-label="把系统提示重置回默认值" title="把系统提示重置回默认值"></i>
-            </label>
-            <input :readonly="view_only" type="text" class="form-control-sm" :class="view_only?'form-control-plaintext':'form-control'" id="isysmsg" v-model="msg.content">
-        </div>
+    <form class="row w-100 g-3 ps-2 pb-2">
+        <template v-if="!params_only">
+            <div class="col-12 fw-bold">{{view_only?'当前对话使用参数：':'如果不理解参数含义，请使用默认值'}}</div>
+            <div class="col-12">
+                <label for="isysmsg" class="form-label fw-bold w-100 clearfix">system prompt
+                    <i v-if="!view_only" class="bi bi-repeat float-end me-1 mt-1 fs-8" role="button" @click="msg.content='You are a helpful assistant.'" aria-label="把系统提示重置回默认值" title="把系统提示重置回默认值"></i>
+                </label>
+                <input :readonly="view_only" type="text" class="form-control-sm" :class="view_only?'form-control-plaintext':'form-control'" id="isysmsg" v-model="msg.content">
+            </div>
+        </template>
         <div class="col-md-3">
             <label for="itemp" class="form-label fw-bold w-100 clearfix">temperature
                 <i v-if="!view_only" class="bi bi-repeat float-end me-1 mt-1 fs-8" role="button" @click="active_chat.arguments.temperature=1" aria-label="把temperature重置回默认值" title="把temperature重置回默认值"></i>
@@ -118,3 +120,16 @@ const null_value = ref("null");
         </div>
     </form>
 </template>
+<style scoped>
+    input:not([type='checkbox']), select {
+        border-bottom: 1px solid;
+        border-top: 0!important;
+        border-left: 0!important;
+        border-right: 0!important;
+        border-radius: 0!important;
+        border-color: var(--bs-border-color);
+    }
+    textarea {
+        border: 1px solid var(--bs-border-color)!important;
+    }
+</style>
