@@ -35,7 +35,7 @@ function run_test(p) {
         props.active_prompt.test_chat.messages[props.active_prompt.test_chat.messages.length-1]._ts = (new Date()).toLocaleString();
     }
     props.active_prompt.test_chat.used_tokens = 0;
-    send_prompt(props.active_prompt.test_chat, true, "manual", false, props.cfg.use_proxy, props.cfg.custom_api, props.cfg.api_key, scrollToBottom);
+    // send_prompt(props.active_prompt.test_chat, true, "manual", false, props.cfg.use_proxy, props.cfg.custom_api, props.cfg.api_key, scrollToBottom);
 }
 
 function scrollToBottom() {
@@ -85,13 +85,13 @@ function tester_class() {
                 </h5>
             </div>
             <div class="flex-grow-1 overflow-y-auto">
-                <div class="row mb-4 g-2 mx-0">
+                <div class="row mb-4 g-2 mx-0 px-1">
                     <div class="col">
                         <label class="form-label fw-bold" for="iprptname">名称</label>
                         <input id="iprptname" type="text" class="form-control form-control" v-model="active_prompt.name">
                     </div>
                 </div>
-                <div class="row mb-4 g-2 mx-0">
+                <div class="row mb-4 g-2 mx-0 px-1">
                     <div class="col">
                         <label class="form-label fw-bold" for="iprpticon">图标</label>
                         <input id="iprpticon" type="text" class="form-control form-control" v-model="active_prompt.icon">
@@ -103,7 +103,7 @@ function tester_class() {
                     </div>
                 </div>
                 <button v-if="active_prompt.messages.length < 1" class="btn text-primary-emphasis" @click="active_prompt.messages.splice(1, 0, {role: 'system', content: ''})"><i class="bi bi-plus-circle"></i></button>
-                <div v-for="msg,midx in active_prompt.messages" class="d-flex flex-row mb-2 mx-0 justify-content-between">
+                <div v-for="msg,midx in active_prompt.messages" class="d-flex flex-row mb-2 mx-0 px-1 justify-content-between">
                     <div>
                         <select class="form-select" v-model="msg.role">
                             <option value="system">系统</option>
@@ -116,7 +116,7 @@ function tester_class() {
                         <textarea class="form-control" v-model="msg.content" rows="2"></textarea>
                     </div>
                     <div class="px-1">
-                        <button class="btn text-primary-emphasis" @click="active_prompt.messages.splice(midx+1, 0, {role: 'user', content: ''})"><i class="bi bi-plus-circle"></i></button>
+                        <button class="btn text-primary-emphasis" @click="active_prompt.messages.splice(midx+1, 0, {role: 'user', content: '', '_visible': false})"><i class="bi bi-plus-circle"></i></button>
                         <button class="btn text-danger-emphasis" @click="active_prompt.messages.splice(midx, 1)"><i class="bi bi-dash-circle"></i></button>
                     </div>
                 </div>
@@ -125,9 +125,9 @@ function tester_class() {
                         <label class="form-label fw-bold">处理响应</label>
                     </div>
                 </div>
-                <button v-if="active_prompt.workflow.length < 1" class="btn text-primary-emphasis" @click="active_prompt.workflow.splice(1, 0, {action: 'chat'})"><i class="bi bi-plus-circle"></i></button>
-                <div v-for="node, nidx in active_prompt.workflow" class="d-flex mb-2 mx-0">
-                    <div>
+                <button v-if="active_prompt.workflow.length < 1" class="btn text-primary-emphasis" @click="active_prompt.workflow.splice(1, 0, {action: 'chat', trigger: {operator:'==', value:''}})"><i class="bi bi-plus-circle"></i></button>
+                <div v-for="node, nidx in active_prompt.workflow" class="d-flex flex-row mb-2 mx-0 px-1">
+                    <div class="flex-grow-1">
                         <select class="form-select" v-model="node.action">
                             <option value="chat">对话</option>
                             <option value="render">显示</option>
@@ -136,8 +136,23 @@ function tester_class() {
                             <option value="download">下载</option>
                             <option value="redirect">转发</option>
                         </select>
+                        <div v-if="node.action=='run_js'" class="px-2">
+                            <label class="mb-2 mt-2 fw-bold">触发条件</label>
+                            <div>
+                            <span class="me-1">${回复内容}</span>
+                            <select v-model="node.trigger.operator" class="ms-1 me-1">
+                                <option value="equal">等于</option>
+                                <option value="contains">包含</option>
+                                <option value="startswith">开头是</option>
+                                <option value="endswith">结尾是</option>
+                            </select>
+                            <input v-model="node.trigger.value" class="ms-1 me-1">
+                            </div>
+                            <label class="mb2 mt-2 fw-bold">代码</label>
+                            <textarea rows="5" class="form-control mt-2" v-model="node.meta"></textarea>
+                        </div>
                     </div>
-                    <div>
+                    <div class="px-1">
                         <button class="btn text-primary-emphasis" @click="active_prompt.workflow.splice(nidx+1, 0, {action: 'chat'})"><i class="bi bi-plus-circle"></i></button>
                         <button class="btn text-danger-emphasis" @click="active_prompt.workflow.splice(nidx, 1)"><i class="bi bi-dash-circle"></i></button>
                     </div>
@@ -152,22 +167,25 @@ function tester_class() {
         </div>
     </div>
     <div v-if="active_prompt.test_chat" class="h-100 py-3 d-flex flex-column" :class="tester_class()">
-        <div class="clearfix">
+        <div class="clearfix align-self-start w-100">
             <button class="btn btn-sm text-secondary-emphasis float-start" @click="run_test(active_prompt)"><i class="bi bi-arrow-repeat"></i></button>
             <button class="btn btn-sm text-secondary-emphasis float-start" @click="active_prompt.test_chat=null"><i class="bi bi-x-lg"></i></button>
             <button class="btn btn-sm text-secondary-emphasis float-end" @click="active_prompt.max_preview_panel=!active_prompt.max_preview_panel"><i class="bi" :class="active_prompt.max_preview_panel?'bi-layout-sidebar':'bi-layout-sidebar-inset'"></i></button>
         </div>
-        <ChatUI :view_only="true" :allow_input="true" :show_params="false" :cfg="cfg" :chats="[active_prompt.test_chat]" :active_chat="active_prompt.test_chat" :zen_mode="false"/>
+        <div class="flex-grow-1 overflow-y-auto">
+            <ChatUI :view_only="true" :agent_meta="active_prompt.workflow" :allow_input="true" :show_params="false" :cfg="cfg" :chats="[active_prompt.test_chat]" :active_chat="active_prompt.test_chat" :zen_mode="false"/>
+        </div>
     </div>
 </template>
 <style scoped>
     input, select {
-        border-bottom: 1px solid;
+        border-bottom: 1px solid!important;
         border-top: 0!important;
         border-left: 0!important;
         border-right: 0!important;
         border-radius: 0!important;
-        border-color: var(--bs-border-color);
+        border-color: var(--bs-border-color)!important;
+        line-height: normal!important;
     }
     textarea {
         border: 1px solid var(--bs-border-color)!important;

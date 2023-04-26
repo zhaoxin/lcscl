@@ -194,7 +194,7 @@ function stop_streaming(chat) {
     chat.waiting_for_resp = false;
 }
 
-function stream_prompt(chat, auto_title, compact_mode, use_proxy, custom_api, api_key, new_msg_callback) {
+function stream_prompt(chat, auto_title, compact_mode, use_proxy, custom_api, api_key, new_msg_callback, agent_meta) {
     var new_answer = "";
     var counter = 0
     const msgidx = chat.messages.length;
@@ -251,6 +251,7 @@ function stream_prompt(chat, auto_title, compact_mode, use_proxy, custom_api, ap
                     if(auto_title == "allr" || (auto_title == "first3r" && round_count > 0 && round_count <= 3)) {
                         get_title(chat, compact_mode, use_proxy, custom_api, api_key);
                     }
+                    console.log(agent_meta)
                 }
                 nextTick(new_msg_callback);
             },
@@ -268,7 +269,27 @@ function stream_prompt(chat, auto_title, compact_mode, use_proxy, custom_api, ap
     );
 }
 
-function send_prompt(chat, is_retry, auto_title, compact_mode, use_proxy, custom_api, api_key, new_msg_callback) {
+function _equal(v1, v2) {
+    return v1 == v2
+}
+
+function _contains(v1, v2) {
+    return v1.indexOf(v2) > -1
+}
+
+function _startswith(v1, v2) {
+    return v1.indexOf(v2) == 0
+}
+
+function _endswith(v1, v2) {
+    return v1.indexOf(v2) > -1 && v1.indexOf(v2) + v2.length == v1.length
+}
+
+function apply_trigger(msg, trigger_meta) {
+    return eval("_"+trigger_meta.operator+"(msg.content, trigger_meta.value)")
+}
+
+function send_prompt(chat, is_retry, auto_title, compact_mode, use_proxy, custom_api, api_key, new_msg_callback, agent_meta) {
     if((chat.new_prompt || is_retry) && !chat.waiting_for_resp) {
         chat.waiting_for_resp = true;
         if(!is_retry) {
@@ -280,7 +301,7 @@ function send_prompt(chat, is_retry, auto_title, compact_mode, use_proxy, custom
         send_moderation(chat.messages[chat.messages.length - 1], use_proxy, api_key);
         nextTick(new_msg_callback);
         if(chat.arguments.stream) {
-            stream_prompt(chat, auto_title, compact_mode, use_proxy, custom_api, api_key, new_msg_callback);
+            stream_prompt(chat, auto_title, compact_mode, use_proxy, custom_api, api_key, new_msg_callback, agent_meta);
         }
         else {
             axios.post(
@@ -290,6 +311,10 @@ function send_prompt(chat, is_retry, auto_title, compact_mode, use_proxy, custom
             .then(function(resp) {
                 if(resp.data.choices && resp.data.choices[0] && resp.data.choices[0].message) {
                     const new_answer = resp.data.choices[0].message;
+                    const agent_on = agent_meta && apply_trigger(new_answer, agent_meta[0].trigger);
+                    if(agent_on) {
+                        // new_answer._visible = false;
+                    }
                     chat.messages.push(new_answer);
                     new_answer._used_tokens = NaN;
                     new_answer._render_mode = "html";
@@ -305,6 +330,14 @@ function send_prompt(chat, is_retry, auto_title, compact_mode, use_proxy, custom
                     // 自动命名
                     if(auto_title == "allr" || (auto_title == "first3r" && round_count > 0 && round_count <= 3)) {
                         get_title(chat, compact_mode, use_proxy, custom_api, api_key);
+                    }
+                    if(agent_on) {
+                        chat.waiting_for_resp = false;
+                        (async ()=>{
+                            const agent_resp = await eval(agent_meta[0].meta)(chat.messages[chat.messages.length-2].content);
+                            chat.messages.push({"role": "user", "content": "the google answer is :\n"+agent_resp, "_visible": false})
+                            send_prompt(chat, true, auto_title, compact_mode, use_proxy, custom_api, api_key, new_msg_callback, null);
+                        })();
                     }
                 }
             })
@@ -345,7 +378,7 @@ function try_again(chat, msgidx, auto_title, compact_mode, use_proxy, custom_api
     if(last_user_msg > -1) {
         chat.messages.splice(last_user_msg + 1, chat.messages.length - last_user_msg - 1);
     }
-    send_prompt(chat, true, auto_title, compact_mode, use_proxy, custom_api, api_key, new_msg_callback);
+    send_prompt(chat, true, auto_title, compact_mode, use_proxy, custom_api, api_key, new_msg_callback, null);
 }
 
 function predict_question(chat, force_refresh, compact_mode, use_proxy, custom_api, api_key) {

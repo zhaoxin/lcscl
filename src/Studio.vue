@@ -119,6 +119,13 @@ function init() {
             workflow: []
         });
     }
+    for(var i=0;i<prompt_apps.length;i++) {
+        for(var j=0;j<prompt_apps[i].workflow.length;j++) {
+            if(prompt_apps[i].workflow[j].trigger === undefined) {
+                prompt_apps[i].workflow[j].trigger = {operator:"==", value: ""};
+            }
+        }
+    }
     switch_theme(cfg.theme);
     active_prompt.value = prompt_apps[0];
     if(!cfg.api_key&&cfg.use_proxy!='custom') {

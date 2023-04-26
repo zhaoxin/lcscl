@@ -16,6 +16,7 @@ const props = defineProps({
     view_only: Boolean,
     show_params: Boolean,
     allow_input: Boolean,
+    agent_meta: Object,
 })
 
 const emit = defineEmits(["all_chats_removed", "last_chat_removed", "chat_removed"]);
@@ -326,7 +327,7 @@ function update_prompt(msg) {
     editing_user_msg.value = null;
     editing_msg_backup.value = "";
     props.active_chat.messages.splice(msgidx + 1, props.active_chat.messages.length - msgidx - 1);
-    send_prompt(props.active_chat, true, props.cfg.auto_title, props.cfg.compact_mode, props.cfg.use_proxy, props.cfg.custom_api, props.cfg.api_key, scrollToBottom);
+    send_prompt(props.active_chat, true, props.cfg.auto_title, props.cfg.compact_mode, props.cfg.use_proxy, props.cfg.custom_api, props.cfg.api_key, scrollToBottom, null);
 }
 
 function select_predict_question(q) {
@@ -340,14 +341,15 @@ function select_predict_question(q) {
         <div v-if="active_chat" class="overflow-y-auto flex-grow-1" id="iplayground" :class="{'px-0': cfg.msg_view=='chatgpt'||zen_mode, 'px-2': cfg.msg_view!='chatgpt'&&!zen_mode, 'mb-3': view_only&&zen_mode}">
             <template v-if="active_chat.messages.length > 0">
                 <template v-for="msg, msgidx in active_chat.messages">
-                <div v-if="!zen_mode||msg.role != 'system'" class="clearfix" :class="{'bg-body-tertiary': cfg.msg_view=='chatgpt'&&msgidx>0&&msgidx%2==0&&!zen_mode}">
+                <div v-if="msg._visible===false"></div>
+                <div v-else-if="!zen_mode||msg.role != 'system'" class="clearfix" :class="{'bg-body-tertiary': cfg.msg_view=='chatgpt'&&msgidx>0&&msgidx%2==0&&!zen_mode}">
                     <div v-if="msg.role != 'assistant'" class="d-inline-block mw-100" 
                     :class="non_assistant_msg_class(msg.role)">
                         <div class="d-flex flex-row">
                             <div v-if="msg.role=='user'" class="me-2 float-start py-2 align-self-start" :class="{'bi bi-person': zen_mode||!cfg.human_avatar, 'fs-7': cfg.msg_view=='card', 'fs-5': cfg.msg_view!='card'&&!zen_mode}">{{zen_mode?'':cfg.human_avatar}}</div>
                             <template v-else-if="msg.role=='system'">
                                 <div v-if="show_params" role="button" aira-label="高级参数设置" title="高级参数设置" class="me-2 bi bi-sliders float-start fs-6 align-self-start" :class="show_system_msg?'py-0':'py-0'" @click="show_system_msg=!show_system_msg"></div>
-                                <div v-else class="fw-bold border-bottom w-100 pb-1">工作流预览</div>
+                                <div v-else class="fw-bold border-bottom w-100 pb-1 mb-2">工作流预览</div>
                             </template>
                             <div v-else class="me-2 bi bi-cpu px-1 float-start py-2 align-self-start" :class="{'fs-7': cfg.msg_view=='card', 'fs-5': cfg.msg_view!='card'}"></div>
                             <template v-if="msg.role=='system'">
@@ -357,7 +359,7 @@ function select_predict_question(q) {
                                 <input v-if="cfg.input_mode=='singleline'||zen_mode" type="text" autocomplete="off" class="form-control mw-100" ref="editpromptinput" v-model="msg.content">
                                 <textarea v-else class="form-control" autocomplete="off" v-model="msg.content" rows="5" cols="60" ref="editprompttextarea"></textarea>
                             </div>
-                            <span v-else class="fs-7 py-2 float-start flex-grow-1" :class="{'text-danger':msg._flagged === 1||msg._flagged===2}">
+                            <span v-else class="fs-7 py-2 float-start flex-grow-1 overflow-x-auto" :class="{'text-danger':msg._flagged === 1||msg._flagged===2}">
                                 {{msg.content}}
                             </span>
                         </div>
@@ -439,6 +441,7 @@ function select_predict_question(q) {
                         </div>
                     </div>
                 </div>
+                <div v-else></div>
                 </template>
             </template>
             <div v-else class="container px-5">
@@ -461,7 +464,7 @@ function select_predict_question(q) {
             </div>
         </div>
         <div v-else class="flex-grow-1"></div>
-        <div class="w-100 align-self-end" :class="{'chatgpt-msg-padding-zen': zen_mode, 'pb-3': !zen_mode, 'border-top': !edit_api_key&&!zen_mode&&!(view_only&&allow_input), 'px-2': cfg.msg_view=='chatgpt'||zen_mode}">
+        <div class="w-100 align-self-end" :class="{'chatgpt-msg-padding-zen': zen_mode, 'pb-3': !zen_mode, 'border-top': !edit_api_key&&!zen_mode&&!(view_only&&allow_input), 'pt-2': view_only&&allow_input, 'px-2': cfg.msg_view=='chatgpt'||zen_mode}">
             <template v-if="!view_only&&!edit_api_key&&!zen_mode">
                 <div id="ipredicts" class="fs-8" v-if="active_chat && active_chat.show_predict_questions">
                     <button class="btn btn-sm btn-link mt-2" :disabled="active_chat.waiting_for_predict" @click="predict_question(active_chat, true, cfg.compact_mode, cfg.use_proxy, cfg.custom_api, cfg.api_key)">
@@ -471,7 +474,7 @@ function select_predict_question(q) {
                 </div>
                 <ChatToolBar v-if="active_chat" :chats="chats" :active_chat="active_chat" :cfg="cfg" @all_chats_removed="emit('all_chats_removed')" @last_chat_removed="emit('last_chat_removed')" @chat_removed="(chatidx)=>emit('chat_removed', chatidx)"/>
             </template>
-            <ChatInput v-if="!view_only||allow_input" :cfg="cfg" :active_chat="active_chat" :zen_mode="zen_mode" @new_msg_pushed="scrollToBottom"/>
+            <ChatInput v-if="!view_only||allow_input" :agent_meta="agent_meta" :cfg="cfg" :active_chat="active_chat" :zen_mode="zen_mode" @new_msg_pushed="scrollToBottom"/>
             <template v-else>
                 <div v-if="!zen_mode" class="mt-1 fs-8 text-muted fw-light clearfix w-100">
                     <template v-if="!edit_api_key && active_chat && active_chat.used_tokens"><i class="bi bi-info-circle me-1"></i>当前话题累计消耗token：{{active_chat.used_tokens}}</template>
