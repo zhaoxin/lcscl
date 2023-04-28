@@ -37,7 +37,7 @@ function new_chat() {
             {"role": "system", "content": "You are a helpful assistant."}
         ],
         arguments: {
-            model: "gpt-3.5-turbo",
+            model: "gpt-4",
             temperature: 1,
             top_p: 1,
             n: 1,
@@ -102,7 +102,7 @@ function init() {
                 {"role": "system", "content": "You are a helpful assistant."}
             ],
             arguments: {
-                model: "gpt-3.5-turbo",
+                model: "gpt-4",
                 temperature: 1,
                 top_p: 1,
                 n: 1,
@@ -133,7 +133,7 @@ function init() {
         chats[i].share_status = 0;
         if(!chats[i].arguments) {
             chats[i].arguments = {
-                model: "gpt-3.5-turbo",
+                model: "gpt-4",
                 temperature: 1,
                 top_p: 1,
                 n: 1,
@@ -187,7 +187,7 @@ function init_viewer() {
             chats[i].waiting_for_predict = false;
             if(!chats[i].arguments) {
                 chats[i].arguments = {
-                    model: "gpt-3.5-turbo",
+                    model: "gpt-4",
                     temperature: 1,
                     top_p: 1,
                     n: 1,
@@ -244,7 +244,7 @@ function import_chats(e) {
                 }
                 if(payload[i].arguments === undefined) {
                     payload[i].arguments = {
-                        model: "gpt-3.5-turbo",
+                        model: "gpt-4",
                         temperature: 1,
                         top_p: 1,
                         n: 1,

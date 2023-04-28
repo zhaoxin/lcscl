@@ -36,7 +36,7 @@ function new_prompt_app() {
             {"role": "system", "content": "You are a helpful assistant."}
         ],
         arguments: {
-            model: "gpt-3.5-turbo",
+            model: "gpt-4",
             temperature: 1,
             top_p: 1,
             n: 1,
@@ -104,7 +104,7 @@ function init() {
                 {"role": "system", "content": "You are a helpful assistant."}
             ],
             arguments: {
-                model: "gpt-3.5-turbo",
+                model: "gpt-4",
                 temperature: 1,
                 top_p: 1,
                 n: 1,
@@ -159,7 +159,7 @@ function import_prompts(e) {
                 }
                 if(payload[i].arguments === undefined) {
                     payload[i].arguments = {
-                        model: "gpt-3.5-turbo",
+                        model: "gpt-4",
                         temperature: 1,
                         top_p: 1,
                         n: 1,

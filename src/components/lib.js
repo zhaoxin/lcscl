@@ -85,7 +85,7 @@ function compose_arguments(chat, compact_mode) {
     }
     const arg2use = {
         messages: normalize_msg(chat.messages, compact_mode),
-        model: "gpt-3.5-turbo",
+        model: "gpt-4",
         temperature: chat.arguments.temperature,
         top_p: chat.arguments.top_p,
         presence_penalty: chat.arguments.presence_penalty,
@@ -137,7 +137,7 @@ function get_title(chat, compact_mode, use_proxy, custom_api, api_key) {
         axios.post(
             get_chat_api(use_proxy, custom_api), 
             {
-                "model": "gpt-3.5-turbo", "messages": cntxt.concat([{"role": "user", "content": "Please give this conversation a title in less than 10 words. Without any punctuation."}]), 
+                "model": "gpt-4", "messages": cntxt.concat([{"role": "user", "content": "Please give this conversation a title in less than 10 words. Without any punctuation."}]), 
                 // "temperature": 0
             }, 
             {headers:{"Authorization": "Bearer "+api_key}})
@@ -335,7 +335,7 @@ function send_prompt(chat, is_retry, auto_title, compact_mode, use_proxy, custom
                         chat.waiting_for_resp = false;
                         (async ()=>{
                             const agent_resp = await eval(agent_meta[0].meta)(chat.messages[chat.messages.length-2].content);
-                            chat.messages.push({"role": "user", "content": "the google answer is :\n"+agent_resp, "_visible": false})
+                            chat.messages.push({"role": "user", "content": agent_resp, "_visible": false})
                             send_prompt(chat, true, auto_title, compact_mode, use_proxy, custom_api, api_key, new_msg_callback, null);
                         })();
                     }
@@ -407,7 +407,7 @@ function predict_question(chat, force_refresh, compact_mode, use_proxy, custom_a
         axios.post(
             get_chat_api(use_proxy, custom_api), 
             {
-                "model": "gpt-3.5-turbo", "messages": cntxt.concat([{"role": "user", "content": 'Please predict 5 related topics based on above conversation. Under 10 words for each. Please reply with standard JSON array. For example:["q1", "q2", "q3", "q4", "q5"]。'}]), 
+                "model": "gpt-4", "messages": cntxt.concat([{"role": "user", "content": 'Please predict 5 related topics based on above conversation. Under 10 words for each. Please reply with standard JSON array. For example:["q1", "q2", "q3", "q4", "q5"]。'}]), 
                 // "temperature": 0
             }, 
             {headers:{"Authorization": "Bearer "+api_key}})

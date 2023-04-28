@@ -94,9 +94,12 @@ const invalid_logitbias = ref(null);
         </div>
         <div class="col-md-3">
             <label for="imodel" class="form-label fw-bold">model</label>
-            <input readonly class="form-control-plaintext form-control-sm" id="imodel" aria-labelledby="imodelhelp" :value="active_chat.arguments.model">
+            <select class="form-select form-select-sm" id="imodel" aria-labelledby="imodelhelp" v-model="active_chat.arguments.model">
+                <option value="gpt-3.5-turbo">GPT-3.5</option>
+                <option value="gpt-4">GPT-4</option>
+            </select>
             <div v-if="!view_only" id="imodelhelp" class="form-text">
-                暂不支持切换模型
+                请确保API Key支持选择的模型，否则会返回404错误
             </div>
         </div>
         <div class="col-md-3">
@@ -121,14 +124,15 @@ const invalid_logitbias = ref(null);
     </form>
 </template>
 <style scoped>
-    input:not([type='checkbox']), select {
+    /* input:not([type='checkbox']), select {
         border-bottom: 1px solid;
         border-top: 0!important;
         border-left: 0!important;
         border-right: 0!important;
         border-radius: 0!important;
         border-color: var(--bs-border-color);
-    }
+        line-height: normal!important;
+    } */
     textarea {
         border: 1px solid var(--bs-border-color)!important;
     }
