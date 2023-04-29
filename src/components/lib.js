@@ -311,7 +311,7 @@ function send_prompt(chat, is_retry, auto_title, compact_mode, use_proxy, custom
             .then(function(resp) {
                 if(resp.data.choices && resp.data.choices[0] && resp.data.choices[0].message) {
                     const new_answer = resp.data.choices[0].message;
-                    const agent_on = agent_meta && apply_trigger(new_answer, agent_meta[0].trigger);
+                    const agent_on = agent_meta && agent_meta[0].action == "run_js" && apply_trigger(new_answer, agent_meta[0].trigger);
                     if(agent_on) {
                         // new_answer._visible = false;
                     }
@@ -334,7 +334,7 @@ function send_prompt(chat, is_retry, auto_title, compact_mode, use_proxy, custom
                     if(agent_on) {
                         chat.waiting_for_resp = false;
                         (async ()=>{
-                            const agent_resp = await eval(agent_meta[0].meta)(chat.messages[chat.messages.length-2].content);
+                            const agent_resp = await eval(agent_meta[0].meta)(chat.messages);
                             chat.messages.push({"role": "user", "content": agent_resp, "_visible": false})
                             send_prompt(chat, true, auto_title, compact_mode, use_proxy, custom_api, api_key, new_msg_callback, null);
                         })();

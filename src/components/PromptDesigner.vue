@@ -103,7 +103,7 @@ function tester_class() {
                     </div>
                 </div>
                 <button v-if="active_prompt.messages.length < 1" class="btn text-primary-emphasis" @click="active_prompt.messages.splice(1, 0, {role: 'system', content: ''})"><i class="bi bi-plus-circle"></i></button>
-                <div v-for="msg,midx in active_prompt.messages" class="d-flex flex-row mb-2 mx-0 px-1 justify-content-between">
+                <div v-for="msg,midx in active_prompt.messages" class="d-flex flex-row mb-3 mx-0 px-1 justify-content-between">
                     <div>
                         <select class="form-select" v-model="msg.role">
                             <option value="system">系统</option>
@@ -113,7 +113,7 @@ function tester_class() {
                     </div>
                     <div class="flex-grow-1 px-1">
                         <!-- <input type="text" class="form-control col-auto" v-model="msg.content"> -->
-                        <textarea class="form-control" v-model="msg.content" rows="2"></textarea>
+                        <textarea class="form-control shadow-sm" v-model="msg.content" rows="2"></textarea>
                     </div>
                     <div class="px-1">
                         <button class="btn text-primary-emphasis" @click="active_prompt.messages.splice(midx+1, 0, {role: 'user', content: '', '_visible': false})"><i class="bi bi-plus-circle"></i></button>

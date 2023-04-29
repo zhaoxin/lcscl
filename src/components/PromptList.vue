@@ -20,7 +20,7 @@ const filtered_prompts = computed(
         <ul class="nav flex-column mt-2">
             <li class="nav-item" v-for="prompt in filtered_prompts">
                 <a class="nav-link ps-1" :class="prompt===active_prompt?'active fw-bold fs-6':'fs-8'" role="button" @click="emit('prompt_switched', prompt)">
-                    <i class="bi me-2">{{ prompt.icon?prompt.icon:"❓" }}</i>{{prompt.name}}
+                    <span class="bi me-2">{{ prompt.icon?prompt.icon:"❓" }}</span>{{prompt.name}}
                 </a>
             </li>
         </ul>
