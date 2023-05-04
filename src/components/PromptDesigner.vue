@@ -153,7 +153,7 @@ function tester_class() {
                         </div>
                     </div>
                     <div class="px-1">
-                        <button class="btn text-primary-emphasis" @click="active_prompt.workflow.splice(nidx+1, 0, {action: 'chat'})"><i class="bi bi-plus-circle"></i></button>
+                        <button class="btn text-primary-emphasis" @click="active_prompt.workflow.splice(nidx+1, 0, {action: 'chat', trigger:{operator:'==', value: ''}})"><i class="bi bi-plus-circle"></i></button>
                         <button class="btn text-danger-emphasis" @click="active_prompt.workflow.splice(nidx, 1)"><i class="bi bi-dash-circle"></i></button>
                     </div>
                 </div>

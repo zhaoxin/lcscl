@@ -311,9 +311,17 @@ function send_prompt(chat, is_retry, auto_title, compact_mode, use_proxy, custom
             .then(function(resp) {
                 if(resp.data.choices && resp.data.choices[0] && resp.data.choices[0].message) {
                     const new_answer = resp.data.choices[0].message;
-                    const agent_on = agent_meta && agent_meta[0].action == "run_js" && apply_trigger(new_answer, agent_meta[0].trigger);
-                    if(agent_on) {
-                        // new_answer._visible = false;
+                    var agent_on = -1;
+                    if(agent_meta) {
+                        for(var i=0;i<agent_meta.length;i++) {
+                            if(agent_meta[i].action == "run_js" && apply_trigger(new_answer, agent_meta[i].trigger)) {
+                                agent_on = i;
+                                break;
+                            }
+                        }
+                    }
+                    if(agent_on > -1) {
+                        new_answer._visible = false;
                     }
                     chat.messages.push(new_answer);
                     new_answer._used_tokens = NaN;
@@ -331,12 +339,17 @@ function send_prompt(chat, is_retry, auto_title, compact_mode, use_proxy, custom
                     if(auto_title == "allr" || (auto_title == "first3r" && round_count > 0 && round_count <= 3)) {
                         get_title(chat, compact_mode, use_proxy, custom_api, api_key);
                     }
-                    if(agent_on) {
+                    if(agent_on > -1) {
                         chat.waiting_for_resp = false;
                         (async ()=>{
-                            const agent_resp = await eval(agent_meta[0].meta)(chat.messages);
-                            chat.messages.push({"role": "user", "content": agent_resp, "_visible": false})
-                            send_prompt(chat, true, auto_title, compact_mode, use_proxy, custom_api, api_key, new_msg_callback, null);
+                            const agent_resp = await eval(agent_meta[agent_on].meta)(chat.messages);
+                            if(agent_resp.next=="continue") {
+                                chat.messages.push({"role": "user", "content": agent_resp.data, "_visible": agent_resp.visible});
+                                send_prompt(chat, true, auto_title, compact_mode, use_proxy, custom_api, api_key, new_msg_callback, agent_meta);
+                            }
+                            else if(agent_resp.next=="render") {
+                                chat.messages.push({"role": "assistant", "content": agent_resp.data, "_visible": true});
+                            }
                         })();
                     }
                 }
