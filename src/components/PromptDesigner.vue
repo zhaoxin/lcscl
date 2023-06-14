@@ -125,36 +125,43 @@ function tester_class() {
                         <label class="form-label fw-bold">处理响应</label>
                     </div>
                 </div>
-                <button v-if="active_prompt.workflow.length < 1" class="btn text-primary-emphasis" @click="active_prompt.workflow.splice(1, 0, {action: 'chat', trigger: {operator:'==', value:''}})"><i class="bi bi-plus-circle"></i></button>
-                <div v-for="node, nidx in active_prompt.workflow" class="d-flex flex-row mb-2 mx-0 px-1">
-                    <div class="flex-grow-1">
-                        <select class="form-select" v-model="node.action">
-                            <option value="chat">对话</option>
-                            <option value="render">显示</option>
-                            <option value="run_js">运行JavaScript</option>
-                            <option value="run_python">运行Python</option>
-                            <option value="download">下载</option>
-                            <option value="redirect">转发</option>
-                        </select>
-                        <div v-if="node.action=='run_js'" class="px-2">
-                            <label class="mb-2 mt-2 fw-bold">触发条件</label>
-                            <div>
-                            <span class="me-1">${回复内容}</span>
-                            <select v-model="node.trigger.operator" class="ms-1 me-1">
-                                <option value="equal">等于</option>
-                                <option value="contains">包含</option>
-                                <option value="startswith">开头是</option>
-                                <option value="endswith">结尾是</option>
+                <button v-if="active_prompt.workflow.length < 1" class="btn text-primary-emphasis" @click="active_prompt.workflow.splice(1, 0, {action: 'chat', trigger: {operator:'==', value:'', hideonhit: true}})"><i class="bi bi-plus-circle"></i></button>
+                <div v-for="node, nidx in active_prompt.workflow">
+                    <div class="fw-bold">#{{ nidx+1 }}</div>
+                    <div class="d-flex flex-row mb-3 mx-0 px-1">
+                        <div class="flex-grow-1">
+                            <select class="form-select" v-model="node.action">
+                                <option value="chat">对话</option>
+                                <option value="render">显示</option>
+                                <option value="run_js">运行JavaScript</option>
+                                <option value="run_python">运行Python</option>
+                                <option value="download">下载</option>
+                                <option value="redirect">转发</option>
                             </select>
-                            <input v-model="node.trigger.value" class="ms-1 me-1">
+                            <div v-if="node.action=='run_js'" class="px-2">
+                                <label class="mb-2 mt-2 fw-bold">触发条件</label>
+                                <div>
+                                    <span class="me-1">${回复内容}</span>
+                                    <select v-model="node.trigger.operator" class="ms-1 me-1">
+                                        <option value="equal">等于</option>
+                                        <option value="contains">包含</option>
+                                        <option value="startswith">开头是</option>
+                                        <option value="endswith">结尾是</option>
+                                    </select>
+                                    <input v-model="node.trigger.value" class="ms-1 me-1">
+                                    <div class="form-check mt-2">
+                                        <input type="checkbox" class="form-check-input" :id="'ihideontrigger'+nidx" v-model="node.trigger.hideonhit">
+                                        <label :for="'ihideontrigger'+nidx" class="form-check-label">触发时隐藏</label>
+                                    </div>
+                                </div>
+                                <label class="mb2 mt-2 fw-bold">代码</label>
+                                <textarea rows="5" class="form-control mt-2" v-model="node.meta"></textarea>
                             </div>
-                            <label class="mb2 mt-2 fw-bold">代码</label>
-                            <textarea rows="5" class="form-control mt-2" v-model="node.meta"></textarea>
                         </div>
-                    </div>
-                    <div class="px-1">
-                        <button class="btn text-primary-emphasis" @click="active_prompt.workflow.splice(nidx+1, 0, {action: 'chat', trigger:{operator:'==', value: ''}})"><i class="bi bi-plus-circle"></i></button>
-                        <button class="btn text-danger-emphasis" @click="active_prompt.workflow.splice(nidx, 1)"><i class="bi bi-dash-circle"></i></button>
+                        <div class="px-1">
+                            <button class="btn text-primary-emphasis" @click="active_prompt.workflow.splice(nidx+1, 0, {action: 'chat', trigger:{operator:'==', value: '', hideonhit: true}})"><i class="bi bi-plus-circle"></i></button>
+                            <button class="btn text-danger-emphasis" @click="active_prompt.workflow.splice(nidx, 1)"><i class="bi bi-dash-circle"></i></button>
+                        </div>
                     </div>
                 </div>
                 <div class="row mt-3 g-2 mx-0">
@@ -178,7 +185,7 @@ function tester_class() {
     </div>
 </template>
 <style scoped>
-    input, select {
+    input:not([type='checkbox']), select {
         border-bottom: 1px solid!important;
         border-top: 0!important;
         border-left: 0!important;

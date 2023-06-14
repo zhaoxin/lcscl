@@ -122,7 +122,7 @@ function init() {
     for(var i=0;i<prompt_apps.length;i++) {
         for(var j=0;j<prompt_apps[i].workflow.length;j++) {
             if(prompt_apps[i].workflow[j].trigger === undefined) {
-                prompt_apps[i].workflow[j].trigger = {operator:"==", value: ""};
+                prompt_apps[i].workflow[j].trigger = {operator:"==", value: "", hideonhit: true};
             }
         }
     }

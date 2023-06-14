@@ -251,7 +251,6 @@ function stream_prompt(chat, auto_title, compact_mode, use_proxy, custom_api, ap
                     if(auto_title == "allr" || (auto_title == "first3r" && round_count > 0 && round_count <= 3)) {
                         get_title(chat, compact_mode, use_proxy, custom_api, api_key);
                     }
-                    console.log(agent_meta)
                 }
                 nextTick(new_msg_callback);
             },
@@ -311,17 +310,18 @@ function send_prompt(chat, is_retry, auto_title, compact_mode, use_proxy, custom
             .then(function(resp) {
                 if(resp.data.choices && resp.data.choices[0] && resp.data.choices[0].message) {
                     const new_answer = resp.data.choices[0].message;
-                    var agent_on = -1;
+                    var agent_on = {node: -1, meta: null};
                     if(agent_meta) {
                         for(var i=0;i<agent_meta.length;i++) {
                             if(agent_meta[i].action == "run_js" && apply_trigger(new_answer, agent_meta[i].trigger)) {
-                                agent_on = i;
+                                agent_on.node = i;
+                                agent_on.meta = agent_meta[i].trigger;
                                 break;
                             }
                         }
                     }
-                    if(agent_on > -1) {
-                        new_answer._visible = false;
+                    if(agent_on.node > -1) {
+                        new_answer._visible = !agent_on.meta.hideonhit;
                     }
                     chat.messages.push(new_answer);
                     new_answer._used_tokens = NaN;
@@ -339,17 +339,18 @@ function send_prompt(chat, is_retry, auto_title, compact_mode, use_proxy, custom
                     if(auto_title == "allr" || (auto_title == "first3r" && round_count > 0 && round_count <= 3)) {
                         get_title(chat, compact_mode, use_proxy, custom_api, api_key);
                     }
-                    if(agent_on > -1) {
-                        chat.waiting_for_resp = false;
+                    if(agent_on.node > -1) {
                         (async ()=>{
-                            const agent_resp = await eval(agent_meta[agent_on].meta)(chat.messages);
+                            const agent_resp = await eval(agent_meta[agent_on.node].meta)(chat.messages);
                             if(agent_resp.next=="continue") {
                                 chat.messages.push({"role": "user", "content": agent_resp.data, "_visible": agent_resp.visible});
+                                chat.waiting_for_resp = false;
                                 send_prompt(chat, true, auto_title, compact_mode, use_proxy, custom_api, api_key, new_msg_callback, agent_meta);
                             }
                             else if(agent_resp.next=="render") {
                                 chat.messages.push({"role": "assistant", "content": agent_resp.data, "_visible": true});
                             }
+                            else {}
                         })();
                     }
                 }
@@ -364,7 +365,7 @@ function send_prompt(chat, is_retry, auto_title, compact_mode, use_proxy, custom
             })
             .then(function(){
                 chat.waiting_for_resp = false;
-                new_msg_callback();
+                nextTick(new_msg_callback);
             });
         }
     }

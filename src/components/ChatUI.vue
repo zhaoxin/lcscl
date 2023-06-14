@@ -312,10 +312,13 @@ function cancel_update_prompt() {
 }
 
 function scrollToBottom() {
-    const pg = document.getElementById("iplayground");
-    if(pg) {
-        pg.scrollTop = pg.scrollHeight;
-    }
+    // nextTick(()=>{
+        const pg = document.getElementById("iplayground");
+        if(pg) {
+            console.log("scroll to bottom")
+            pg.scrollTop = pg.scrollHeight;
+        }
+    // });
 }
 
 function update_prompt(msg) {
@@ -342,7 +345,7 @@ function select_predict_question(q) {
             <template v-if="active_chat.messages.length > 0">
                 <template v-for="msg, msgidx in active_chat.messages">
                 <div v-if="msg._visible===false"></div>
-                <div v-else-if="!zen_mode||msg.role != 'system'" class="clearfix" :class="{'bg-body-tertiary': cfg.msg_view=='chatgpt'&&msgidx>0&&msgidx%2==0&&!zen_mode}">
+                <div v-else-if="!zen_mode||msg.role != 'system'" class="clearfix" :class="{'bg-body-tertiary': cfg.msg_view=='chatgpt'&&msgidx>0&&msg.role!='user'&&!zen_mode}">
                     <div v-if="msg.role != 'assistant'" class="d-inline-block mw-100" 
                     :class="non_assistant_msg_class(msg.role)">
                         <div class="d-flex flex-row">
