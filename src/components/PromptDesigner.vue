@@ -132,11 +132,11 @@ function tester_class() {
                         <div class="flex-grow-1">
                             <select class="form-select" v-model="node.action">
                                 <option value="chat">对话</option>
-                                <option value="render">显示</option>
+                                <!-- <option value="render">显示</option> -->
                                 <option value="run_js">运行JavaScript</option>
-                                <option value="run_python">运行Python</option>
+                                <!-- <option value="run_python">运行Python</option>
                                 <option value="download">下载</option>
-                                <option value="redirect">转发</option>
+                                <option value="redirect">转发</option> -->
                             </select>
                             <div v-if="node.action=='run_js'" class="px-2">
                                 <label class="mb-2 mt-2 fw-bold">触发条件</label>

@@ -140,8 +140,8 @@ marked.setOptions({
 });
 marked.use({ renderer });
 
-function purify(msg) {
-    return DOMPurify.sanitize(marked.parse(msg.content), {ADD_ATTR: ["target"]});
+function purify(raw_content) {
+    return DOMPurify.sanitize(marked.parse(raw_content), {ADD_ATTR: ["target"]});
 }
 
 function copy_code(e) {
@@ -315,7 +315,7 @@ function scrollToBottom() {
     // nextTick(()=>{
         const pg = document.getElementById("iplayground");
         if(pg) {
-            console.log("scroll to bottom")
+            // console.log("scroll to bottom")
             pg.scrollTop = pg.scrollHeight;
         }
     // });
@@ -402,9 +402,16 @@ function select_predict_question(q) {
                         <div class="card-header py-1 border-success clearfix fs-7">
                             <span class="float-start" :class="{'bi bi-robot': zen_mode||!cfg.robot_avatar}">{{zen_mode?'':cfg.robot_avatar}}</span>
                         </div>
-                        <div class="card-body" style="overflow-x: auto;">
+                        <div v-if="msg.function_call" class="card-body" style="overflow-x: auto;">
+                            <span class="fs-7">调用函数：{{msg.function_call.name}}</span>
+                            <div v-if="msg.function_call.arguments" class="fs-7" v-html="purify('使用参数：'+msg.function_call.arguments)"></div>
+                            <div>
+                                <button class="btn btn-sm btn-success"><i class="bi bi-play me-1"></i>确认执行</button>
+                            </div>
+                        </div>
+                        <div v-else class="card-body" style="overflow-x: auto;">
                             <span v-if="msg._render_mode=='text' || msg._flagged===1 || msg._flagged===2" class="fs-7" :class="{'text-danger':msg._flagged===1 || msg._flagged===2}">{{msg.content}}</span>
-                            <div v-else style="overflow-x: auto;" class="fs-7" v-html="purify(msg)" @click="copy_code($event)"></div>
+                            <div v-else style="overflow-x: auto;" class="fs-7" v-html="purify(msg.content)" @click="copy_code($event)"></div>
                             <div v-if="!view_only&&active_chat.stream_controller&&active_chat.arguments.stream==true&&msgidx==active_chat.messages.length-1">
                                 <i v-if="active_chat.waiting_for_resp" role="button" class="cursor-pointer text-danger bi bi-stop-fill me-1" @click="stop_streaming(active_chat)"></i>
                                 <i v-else class="text-success bi bi-check2-all"></i>
@@ -415,9 +422,16 @@ function select_predict_question(q) {
                         <template v-else>
                             <div style="display: flex; flex-direction: row;">
                                 <div class="me-2 py-2 float-start" :class="{'bi bi-robot': zen_mode||!cfg.robot_avatar, 'fs-5': !zen_mode}" style="align-self: flex-start;">{{zen_mode?'':cfg.robot_avatar}}</div>
-                                <div class="float-start" style="overflow-x: auto; flex: 1">
+                                <div v-if="msg.function_call" class="float-start" style="overflow-x: auto; flex: 1">
+                                    <div class="fs-7 py-2">调用函数：{{msg.function_call.name}}</div>
+                                    <div v-if="msg.function_call.arguments" class="fs-7 py-2" v-html="purify('使用参数：'+msg.function_call.arguments)"></div>
+                                    <div>
+                                        <button class="btn btn-sm btn-success"><i class="bi bi-play me-1"></i>确认执行</button>
+                                    </div>
+                                </div>
+                                <div v-else class="float-start" style="overflow-x: auto; flex: 1">
                                     <div v-if="msg._render_mode=='text' || msg._flagged===1 || msg._flagged===2" class="fs-7 py-2" :class="{'text-danger':msg._flagged===1 || msg._flagged===2}">{{msg.content}}</div>
-                                    <div v-else style="overflow-x: auto;" class="fs-7 py-2" v-html="purify(msg)" @click="copy_code($event)"></div>
+                                    <div v-else style="overflow-x: auto;" class="fs-7 py-2" v-html="purify(msg.content)" @click="copy_code($event)"></div>
                                     <div v-if="!view_only&&active_chat.stream_controller&&active_chat.arguments.stream==true&&msgidx==active_chat.messages.length-1">
                                         <i v-if="active_chat.waiting_for_resp" role="button" class="cursor-pointer text-danger bi bi-stop-fill me-1" @click="stop_streaming(active_chat)"></i>
                                         <i v-else class="text-success bi bi-check2-all"></i>
@@ -439,8 +453,10 @@ function select_predict_question(q) {
                                 </span>
                                 <i v-else class="bi bi-trash ms-2 float-end" style="cursor: pointer" @click="removing_msg=msg"></i>
                             </template>
-                            <i style="cursor: pointer" class="bi bi-clipboard float-end ms-2" @click="copy_msg($event, msg)"></i>
-                            <i style="cursor: pointer" class="bi float-end ms-5" :class="msg._render_mode=='text'?'bi-blockquote-left':'bi-code-slash'" @click="msg._render_mode = msg._render_mode=='text'?'html':'text'"></i>
+                            <template v-if="!msg.function_call">
+                                <i style="cursor: pointer" class="bi bi-clipboard float-end ms-2" @click="copy_msg($event, msg)"></i>
+                                <i style="cursor: pointer" class="bi float-end ms-5" :class="msg._render_mode=='text'?'bi-blockquote-left':'bi-code-slash'" @click="msg._render_mode = msg._render_mode=='text'?'html':'text'"></i>
+                            </template>
                         </div>
                     </div>
                 </div>

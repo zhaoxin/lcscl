@@ -1,4 +1,5 @@
 <script setup>
+import { default_arguments } from "./components/lib.js"
 import { ref, reactive, onMounted, watch } from "vue"
 import TopNav from "./components/TopNav.vue"
 import PromptList from "./components/PromptList.vue"
@@ -35,19 +36,7 @@ function new_prompt_app() {
         messages: [
             {"role": "system", "content": "You are a helpful assistant."}
         ],
-        arguments: {
-            model: "gpt-4",
-            temperature: 1,
-            top_p: 1,
-            n: 1,
-            stream: false,
-            stop: null,
-            max_tokens: 0, // inf
-            presence_penalty: 0,
-            frequency_penalty: 0,
-            logit_bias: null,
-            user: null
-        },
+        arguments: default_arguments(),
         workflow: []
     });
     active_prompt.value = prompt_apps[0];
@@ -103,19 +92,7 @@ function init() {
             messages: [
                 {"role": "system", "content": "You are a helpful assistant."}
             ],
-            arguments: {
-                model: "gpt-4",
-                temperature: 1,
-                top_p: 1,
-                n: 1,
-                stream: false,
-                stop: null,
-                max_tokens: 0, // inf
-                presence_penalty: 0,
-                frequency_penalty: 0,
-                logit_bias: null,
-                user: null
-            },
+            arguments: default_arguments(),
             workflow: []
         });
     }
@@ -158,19 +135,7 @@ function import_prompts(e) {
                     payload[i].workflow = [];
                 }
                 if(payload[i].arguments === undefined) {
-                    payload[i].arguments = {
-                        model: "gpt-4",
-                        temperature: 1,
-                        top_p: 1,
-                        n: 1,
-                        stream: false,
-                        stop: null,
-                        max_tokens: 0, // inf
-                        presence_penalty: 0,
-                        frequency_penalty: 0,
-                        logit_bias: null,
-                        user: null
-                    }
+                    payload[i].arguments = default_arguments();
                 }
             }
             active_prompt.value = null;

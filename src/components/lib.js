@@ -2,6 +2,40 @@ import axios from "axios"
 import { fetchEventSource, EventStreamContentType } from "@microsoft/fetch-event-source"
 import { nextTick } from "vue"
 
+function default_arguments() {
+    return {
+        model: "gpt-3.5-turbo-0613",
+        functions: [
+            {
+                name: "ask_google",
+                description: "When you don't know the answer, call this function to ask Google.",
+                parameters: {
+                    type: "object",
+                    properties: [
+                        {
+                            name: "query",
+                            type: "string",
+                            description: "The query to ask Google.",
+                        }
+                    ],
+                    required: [],
+                }
+            }
+        ],
+        function_call: "none",
+        temperature: 1,
+        top_p: 1,
+        n: 1,
+        stream: false,
+        stop: null,
+        max_tokens: 0, // inf
+        presence_penalty: 0,
+        frequency_penalty: 0,
+        logit_bias: null,
+        user: null,
+    };
+}
+
 function normalize_msg(msgs, compact_mode) {
     const rslt = msgs.filter((m)=>{return m.role == "system" || m.role == "user" || m.role == "assistant"}).map((m)=>{return {role: m.role, content: m.content}});
     if(compact_mode) {
@@ -83,9 +117,27 @@ function compose_arguments(chat, compact_mode) {
     if(chat.arguments.max_tokens < 1) {
         chat.arguments.max_tokens = 0;
     }
+    const reformat_funcs = [];
+    for(var i=0;i<chat.arguments.functions.length;i++) {
+        const new_func = {
+            name: chat.arguments.functions[i].name,
+            description: chat.arguments.functions[i].description,
+            parameters: {
+                type: chat.arguments.functions[i].parameters.type,
+                required: chat.arguments.functions[i].parameters.required,
+            }
+        };
+        const new_properties = {};
+        for(var j=0;j<chat.arguments.functions[i].parameters.properties.length;j++) {
+            console.log(chat.arguments.functions[i].parameters.properties[j])
+            new_properties[chat.arguments.functions[i].parameters.properties[j].name] = {type: chat.arguments.functions[i].parameters.properties[j].type, description: chat.arguments.functions[i].parameters.properties[j].description};
+        }
+        new_func.parameters.properties = new_properties;
+        reformat_funcs.push(new_func);
+    }
     const arg2use = {
         messages: normalize_msg(chat.messages, compact_mode),
-        model: "gpt-4",
+        model: chat.arguments.model,
         temperature: chat.arguments.temperature,
         top_p: chat.arguments.top_p,
         presence_penalty: chat.arguments.presence_penalty,
@@ -93,6 +145,10 @@ function compose_arguments(chat, compact_mode) {
         stop: chat.arguments.stop,
         stream: chat.arguments.stream,
     };
+    if(reformat_funcs.length > 0) {
+        arg2use["functions"] = reformat_funcs;
+        arg2use["function_call"] = "auto";
+    }
     if(chat.arguments.max_tokens >= 1) {
         arg2use["max_tokens"] = chat.arguments.max_tokens;
     }
@@ -137,7 +193,7 @@ function get_title(chat, compact_mode, use_proxy, custom_api, api_key) {
         axios.post(
             get_chat_api(use_proxy, custom_api), 
             {
-                "model": "gpt-4", "messages": cntxt.concat([{"role": "user", "content": "Please give this conversation a title in less than 10 words. Without any punctuation."}]), 
+                "model": "gpt-3.5-turbo-0613", "messages": cntxt.concat([{"role": "user", "content": "Please give this conversation a title in less than 10 words. Without any punctuation."}]), 
                 // "temperature": 0
             }, 
             {headers:{"Authorization": "Bearer "+api_key}})
@@ -159,6 +215,9 @@ function get_title(chat, compact_mode, use_proxy, custom_api, api_key) {
 }
 
 function send_moderation(msg2moderate, use_proxy, api_key) {
+    if(!msg2moderate.content) {
+        return;
+    }
     msg2moderate._flagged = 0;
     const req_body = {"model": "text-moderation-latest", "input": msg2moderate.content};
     axios.post(
@@ -196,6 +255,7 @@ function stop_streaming(chat) {
 
 function stream_prompt(chat, auto_title, compact_mode, use_proxy, custom_api, api_key, new_msg_callback, agent_meta) {
     var new_answer = "";
+    var func_call = null;
     var counter = 0
     const msgidx = chat.messages.length;
     chat.stream_controller = new AbortController();
@@ -214,27 +274,36 @@ function stream_prompt(chat, auto_title, compact_mode, use_proxy, custom_api, ap
             onmessage(ev) {
                 if(ev.data != "[DONE]") {
                     const chunk = JSON.parse(ev.data);
+                    // console.log(chunk);
+                    const delta = chunk.choices[0].delta;
                     counter += 1
                     if(counter == 1) {
-                        console.log("first chunk!")
+                        // console.log("first chunk!")
+                        if (delta.function_call) {
+                            func_call = delta.function_call;
+                        }
                         chat.messages.push({
                             "role": "assistant", 
                             "content": "", 
+                            "function_call": func_call,
                             "_render_mode": "html", 
                             "_used_tokens": NaN, 
                             "_created_ts": (new Date(chunk.created * 1000)).toLocaleString(),
                             "_received_ts": (new Date()).toLocaleString()
                         });
                     }
-                    const delta = chunk.choices[0].delta;
-                    if(delta.content) {
-                        new_answer += delta.content;
+                    else {
+                        new_answer += delta.content?delta.content:"";
+                        if(func_call) {
+                            func_call.arguments += delta.function_call?delta.function_call.arguments:"";
+                        }
                         chat.messages.splice(
                             msgidx, 
                             1, 
                             {
                                 "role": "assistant", 
                                 "content": new_answer, 
+                                "function_call": func_call,
                                 "_render_mode": "html", 
                                 "_used_tokens": NaN, 
                                 "_created_ts": (new Date(chunk.created * 1000)).toLocaleString(),
@@ -421,7 +490,7 @@ function predict_question(chat, force_refresh, compact_mode, use_proxy, custom_a
         axios.post(
             get_chat_api(use_proxy, custom_api), 
             {
-                "model": "gpt-4", "messages": cntxt.concat([{"role": "user", "content": 'Please predict 5 related topics based on above conversation. Under 10 words for each. Please reply with standard JSON array. For example:["q1", "q2", "q3", "q4", "q5"]。'}]), 
+                "model": "gpt-3.5-turbo-0613", "messages": cntxt.concat([{"role": "user", "content": 'Please predict 5 related topics based on above conversation. Under 10 words for each. Please reply with standard JSON array. For example:["q1", "q2", "q3", "q4", "q5"]。'}]), 
                 // "temperature": 0
             }, 
             {headers:{"Authorization": "Bearer "+api_key}})
@@ -451,4 +520,4 @@ function predict_question(chat, force_refresh, compact_mode, use_proxy, custom_a
     }
 }
 
-export { normalize_msg, get_title, send_prompt, stop_streaming, try_again, predict_question, validate_argument }
+export {  default_arguments, normalize_msg, get_title, send_prompt, stop_streaming, try_again, predict_question, validate_argument }

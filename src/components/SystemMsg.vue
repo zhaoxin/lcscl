@@ -95,8 +95,14 @@ const invalid_logitbias = ref(null);
         <div class="col-md-3">
             <label for="imodel" class="form-label fw-bold">model</label>
             <select class="form-select form-select-sm" id="imodel" aria-labelledby="imodelhelp" v-model="active_chat.arguments.model">
-                <option value="gpt-3.5-turbo">GPT-3.5</option>
-                <option value="gpt-4">GPT-4</option>
+                <option value="gpt-3.5-turbo-0301">gpt-3.5-turbo-0301</option>
+                <option value="gpt-3.5-turbo-16k-0301">gpt-3.5-turbo-16k-0301</option>
+                <option value="gpt-3.5-turbo-0613">gpt-3.5-turbo-0613</option>
+                <option value="gpt-3.5-turbo-16k-0613">gpt-3.5-turbo-16k-0613</option>
+                <option value="gpt-4-0314">gpt-4-0314</option>
+                <option value="gpt-4-32k-0314">gpt-4-32k-0314</option>
+                <option value="gpt-4-0613">gpt-4-0613</option>
+                <option value="gpt-4-32k-0613">gpt-4-32k-0613</option>
             </select>
             <div v-if="!view_only" id="imodelhelp" class="form-text">
                 请确保API Key支持选择的模型，否则会返回404错误
@@ -121,6 +127,34 @@ const invalid_logitbias = ref(null);
                 {{view_only?'流模式回复（打字机效果）':'流模式回复（打字机效果）；该模式下不显示用量统计'}}
             </div>
         </div>
+        <div class="col-12">
+            <label class="form-label fw-bold">functions</label>
+        </div>
+        <div class="col-md-3">
+            <label for="ifuncname" class="form-label fw-bold w-100 clearfix">name</label>
+            <input :readonly="view_only" type="text" class="form-control-sm" :class="{'form-control-plaintext': view_only, 'form-control': !view_only}" id="ifuncname" v-model="active_chat.arguments.functions[0].name">
+        </div>
+        <div class="col-md-9">
+            <label for="ifuncdesc" class="form-label fw-bold w-100 clearfix">description</label>
+            <input :readonly="view_only" type="text" class="form-control-sm" :class="{'form-control-plaintext': view_only, 'form-control': !view_only}" id="ifuncdesc" v-model="active_chat.arguments.functions[0].description">
+        </div>
+        <div class="col-12">
+            <label class="form-label fw-bold">parameters</label>
+        </div>
+        <template v-for="(funcparam, funcparamidx) in active_chat.arguments.functions[0].parameters.properties">
+            <div class="col-md-3">
+                <label for="ifuncparamname" class="form-label fw-bold w-100 clearfix">name</label>
+                <input :readonly="view_only" type="text" class="form-control-sm" :class="{'form-control-plaintext': view_only, 'form-control': !view_only}" id="ifuncparamname" v-model="funcparam.name">
+            </div>
+            <div class="col-md-3">
+                <label for="ifuncparamtype" class="form-label fw-bold w-100 clearfix">type</label>
+                <input :readonly="view_only" type="text" class="form-control-sm" :class="{'form-control-plaintext': view_only, 'form-control': !view_only}" id="ifuncparamtype" v-model="funcparam.type">
+            </div>
+            <div class="col-md-6">
+                <label for="ifuncparamdesc" class="form-label fw-bold w-100 clearfix">description</label>
+                <input :readonly="view_only" type="text" class="form-control-sm" :class="{'form-control-plaintext': view_only, 'form-control': !view_only}" id="ifuncparamdesc" v-model="funcparam.description">
+            </div>
+        </template>
     </form>
 </template>
 <style scoped>

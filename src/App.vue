@@ -1,4 +1,5 @@
 <script setup>
+import { default_arguments } from "./components/lib.js"
 import { ref, reactive, onMounted, watch } from "vue"
 import TopNav from "./components/TopNav.vue"
 import ChatList from "./components/ChatList.vue"
@@ -36,19 +37,7 @@ function new_chat() {
         messages: [
             {"role": "system", "content": "You are a helpful assistant."}
         ],
-        arguments: {
-            model: "gpt-4",
-            temperature: 1,
-            top_p: 1,
-            n: 1,
-            stream: false,
-            stop: null,
-            max_tokens: 0, // inf
-            presence_penalty: 0,
-            frequency_penalty: 0,
-            logit_bias: null,
-            user: null
-        },
+        arguments: default_arguments(),
         predict_questions: [],
         waiting_for_resp: false,
         waiting_for_title: false,
@@ -101,19 +90,7 @@ function init() {
             messages: [
                 {"role": "system", "content": "You are a helpful assistant."}
             ],
-            arguments: {
-                model: "gpt-4",
-                temperature: 1,
-                top_p: 1,
-                n: 1,
-                stream: false,
-                stop: null,
-                max_tokens: 0, // inf
-                presence_penalty: 0,
-                frequency_penalty: 0,
-                logit_bias: null,
-                user: null
-            },
+            arguments: default_arguments(),
             predict_questions: [],
             waiting_for_resp: false,
             waiting_for_title: false,
@@ -132,19 +109,7 @@ function init() {
         chats[i].stream_controller = null;
         chats[i].share_status = 0;
         if(!chats[i].arguments) {
-            chats[i].arguments = {
-                model: "gpt-4",
-                temperature: 1,
-                top_p: 1,
-                n: 1,
-                stream: false,
-                stop: null,
-                max_tokens: 0, // inf
-                presence_penalty: 0,
-                frequency_penalty: 0,
-                logit_bias: null,
-                user: null
-            };
+            chats[i].arguments = default_arguments();
         }
     }
     switch_theme(cfg.theme);
@@ -186,19 +151,7 @@ function init_viewer() {
             chats[i].waiting_for_title = false;
             chats[i].waiting_for_predict = false;
             if(!chats[i].arguments) {
-                chats[i].arguments = {
-                    model: "gpt-4",
-                    temperature: 1,
-                    top_p: 1,
-                    n: 1,
-                    stream: false,
-                    stop: null,
-                    max_tokens: 0, // inf
-                    presence_penalty: 0,
-                    frequency_penalty: 0,
-                    logit_bias: null,
-                    user: null
-                };
+                chats[i].arguments = default_arguments();
             }
         }
         active_chat.value = chats[0];
@@ -243,19 +196,7 @@ function import_chats(e) {
                     payload[i].show_predict_questions = false;
                 }
                 if(payload[i].arguments === undefined) {
-                    payload[i].arguments = {
-                        model: "gpt-4",
-                        temperature: 1,
-                        top_p: 1,
-                        n: 1,
-                        stream: false,
-                        stop: null,
-                        max_tokens: 0, // inf
-                        presence_penalty: 0,
-                        frequency_penalty: 0,
-                        logit_bias: null,
-                        user: null
-                    }
+                    payload[i].arguments = default_arguments();
                 }
             }
             active_chat.value = null;
