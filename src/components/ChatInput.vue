@@ -49,7 +49,7 @@ function navigate_history(direction) {
         class="btn btn-sm float-end" 
         :class="{'btn-primary':!zen_mode}" 
         :disabled="edit_api_key" 
-        @click="send_prompt(active_chat, false, cfg.auto_title, cfg.compact_mode, cfg.use_proxy, cfg.custom_api, cfg.api_key, ()=>{emit('new_msg_pushed')}, agent_meta)" 
+        @click="send_prompt(active_chat, false, null, cfg.auto_title, cfg.compact_mode, cfg.use_proxy, cfg.custom_api, cfg.api_key, ()=>{emit('new_msg_pushed')}, agent_meta)" 
         aria-label="提交" 
         title="提交"><i class="bi bi-send"></i>
     </button>
@@ -65,7 +65,7 @@ function navigate_history(direction) {
         v-focus 
         v-model="active_chat.new_prompt" 
         @paste="prompt_pasted" 
-        @keyup.enter="send_prompt(active_chat, false, cfg.auto_title, cfg.compact_mode, cfg.use_proxy, cfg.custom_api, cfg.api_key, ()=>{emit('new_msg_pushed')}, agent_meta)" 
+        @keyup.enter="send_prompt(active_chat, false, null, cfg.auto_title, cfg.compact_mode, cfg.use_proxy, cfg.custom_api, cfg.api_key, ()=>{emit('new_msg_pushed')}, agent_meta)" 
         @keyup.arrow-up="navigate_history(-1)" 
         @keyup.arrow-down="navigate_history(1)"
     >
@@ -77,7 +77,7 @@ function navigate_history(direction) {
         :placeholder="edit_api_key?'尚未设置API Key':''" 
         v-focus 
         v-model="active_chat.new_prompt" 
-        @keyup.ctrl.enter="send_prompt(active_chat, false, cfg.auto_title, cfg.compact_mode, cfg.use_proxy, cfg.custom_api, cfg.api_key, ()=>{emit('new_msg_pushed')}, agent_meta)" 
+        @keyup.ctrl.enter="send_prompt(active_chat, false, null, cfg.auto_title, cfg.compact_mode, cfg.use_proxy, cfg.custom_api, cfg.api_key, ()=>{emit('new_msg_pushed')}, agent_meta)" 
         @keyup.ctrl.arrow-up="navigate_history(-1)" 
         @keyup.ctrl.arrow-down="navigate_history(1)" 
         rows="5">
@@ -85,7 +85,7 @@ function navigate_history(direction) {
     <button v-if="cfg.input_mode!='singleline'&&!zen_mode" 
         class="mt-1 btn btn-sm btn-primary float-end" 
         :disabled="edit_api_key" 
-        @click="send_prompt(active_chat, false, cfg.auto_title, cfg.compact_mode, cfg.use_proxy, cfg.custom_api, cfg.api_key, ()=>{emit('new_msg_pushed')}, agent_meta)" 
+        @click="send_prompt(active_chat, false, null, cfg.auto_title, cfg.compact_mode, cfg.use_proxy, cfg.custom_api, cfg.api_key, ()=>{emit('new_msg_pushed')}, agent_meta)" 
         aria-label="提交" 
         title="提交"><i class="bi bi-send"></i>
     </button>

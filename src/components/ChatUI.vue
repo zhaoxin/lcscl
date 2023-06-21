@@ -6,7 +6,7 @@ import { ref, computed, nextTick } from "vue"
 import SystemMsg from "./SystemMsg.vue"
 import ChatToolBar from "./ChatToolBar.vue"
 import ChatInput from "./ChatInput.vue"
-import { send_prompt, stop_streaming, try_again, predict_question } from "./lib.js"
+import { send_prompt, stop_streaming, try_again, predict_question, call_func } from "./lib.js"
 
 const props = defineProps({
     cfg: Object,
@@ -330,13 +330,15 @@ function update_prompt(msg) {
     editing_user_msg.value = null;
     editing_msg_backup.value = "";
     props.active_chat.messages.splice(msgidx + 1, props.active_chat.messages.length - msgidx - 1);
-    send_prompt(props.active_chat, true, props.cfg.auto_title, props.cfg.compact_mode, props.cfg.use_proxy, props.cfg.custom_api, props.cfg.api_key, scrollToBottom, null);
+    send_prompt(props.active_chat, true, null, props.cfg.auto_title, props.cfg.compact_mode, props.cfg.use_proxy, props.cfg.custom_api, props.cfg.api_key, scrollToBottom, null);
 }
 
 function select_predict_question(q) {
     props.active_chat.new_prompt = q;
     document.getElementById("imaininput").focus();
 }
+
+
 </script>
 <template>
     <div class="h-100 pt-3 d-flex flex-column">
@@ -406,7 +408,9 @@ function select_predict_question(q) {
                             <span class="fs-7">调用函数：{{msg.function_call.name}}</span>
                             <div v-if="msg.function_call.arguments" class="fs-7" v-html="purify('使用参数：'+msg.function_call.arguments)"></div>
                             <div>
-                                <button class="btn btn-sm btn-success"><i class="bi bi-play me-1"></i>确认执行</button>
+                                <button class="btn btn-sm btn-success" :disabled="active_chat.waiting_for_func || active_chat.waiting_for_resp" @click="call_func(active_chat, msg.function_call.name, msg.function_call.arguments, cfg, scrollToBottom)">
+                                    <i class="bi me-1" :class="active_chat.waiting_for_func || active_chat.waiting_for_resp?'spinner-grow spinner-grow-sm':'bi-play'"></i>确认执行
+                                </button>
                             </div>
                         </div>
                         <div v-else class="card-body" style="overflow-x: auto;">
@@ -426,7 +430,9 @@ function select_predict_question(q) {
                                     <div class="fs-7 py-2">调用函数：{{msg.function_call.name}}</div>
                                     <div v-if="msg.function_call.arguments" class="fs-7 py-2" v-html="purify('使用参数：'+msg.function_call.arguments)"></div>
                                     <div>
-                                        <button class="btn btn-sm btn-success"><i class="bi bi-play me-1"></i>确认执行</button>
+                                        <button class="btn btn-sm btn-success" :disabled="active_chat.waiting_for_func || active_chat.waiting_for_resp" @click="call_func(active_chat, msg.function_call.name, msg.function_call.arguments, cfg, scrollToBottom)">
+                                            <i class="bi me-1" :class="active_chat.waiting_for_func || active_chat.waiting_for_resp?'spinner-grow spinner-grow-sm':'bi-play'"></i>确认执行
+                                        </button>
                                     </div>
                                 </div>
                                 <div v-else class="float-start" style="overflow-x: auto; flex: 1">
@@ -473,7 +479,7 @@ function select_predict_question(q) {
                 </div>
             </div>
             <!-- 等待回复... -->
-            <div v-if="active_chat.waiting_for_resp && active_chat.messages[active_chat.messages.length-1].role=='user'" class="clearfix">
+            <div v-if="active_chat.waiting_for_resp && (active_chat.messages[active_chat.messages.length-1].role=='user' || active_chat.messages[active_chat.messages.length-1].role=='function')" class="clearfix">
                 <div style="display: inline-block" :class="waiting_resp_class()">
                     <div class="clearfix" style="overflow-x: auto;">
                         <span class="me-2"><i class="bi bi-send"></i></span>

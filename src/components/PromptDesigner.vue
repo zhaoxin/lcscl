@@ -35,7 +35,7 @@ function run_test(p) {
         props.active_prompt.test_chat.messages[props.active_prompt.test_chat.messages.length-1]._ts = (new Date()).toLocaleString();
     }
     props.active_prompt.test_chat.used_tokens = 0;
-    // send_prompt(props.active_prompt.test_chat, true, "manual", false, props.cfg.use_proxy, props.cfg.custom_api, props.cfg.api_key, scrollToBottom);
+    // send_prompt(props.active_prompt.test_chat, true, null, "manual", false, props.cfg.use_proxy, props.cfg.custom_api, props.cfg.api_key, scrollToBottom);
 }
 
 function scrollToBottom() {

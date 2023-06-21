@@ -42,6 +42,7 @@ function new_chat() {
         waiting_for_resp: false,
         waiting_for_title: false,
         waiting_for_predict: false,
+        waiting_for_func: false,
         show_predict_questions: false,
         used_tokens: 0
     });
@@ -95,6 +96,7 @@ function init() {
             waiting_for_resp: false,
             waiting_for_title: false,
             waiting_for_predict: false,
+            waiting_for_func: false,
             show_predict_questions: false,
             used_tokens: 0
         });
@@ -106,6 +108,7 @@ function init() {
         chats[i].waiting_for_resp = false;
         chats[i].waiting_for_title = false;
         chats[i].waiting_for_predict = false;
+        chats[i].waiting_for_func = false;
         chats[i].stream_controller = null;
         chats[i].share_status = 0;
         if(!chats[i].arguments) {
@@ -150,6 +153,7 @@ function init_viewer() {
             chats[i].waiting_for_resp = false;
             chats[i].waiting_for_title = false;
             chats[i].waiting_for_predict = false;
+            chats[i].waiting_for_func = false;
             if(!chats[i].arguments) {
                 chats[i].arguments = default_arguments();
             }

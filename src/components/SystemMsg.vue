@@ -155,6 +155,14 @@ const invalid_logitbias = ref(null);
                 <input :readonly="view_only" type="text" class="form-control-sm" :class="{'form-control-plaintext': view_only, 'form-control': !view_only}" id="ifuncparamdesc" v-model="funcparam.description">
             </div>
         </template>
+        <div class="col-12">
+            <label class="form-label fw-bold" for="ifunccode">code</label>
+            <textarea :readonly="view_only" class="form-control form-control-sm" rows="5" id="ifunccode" v-model="active_chat.arguments.functions[0].code"></textarea>
+            <div class="form-check mt-2 form-control-sm">
+                <input type="checkbox" class="form-check-input" id="ifuncconfirm" v-model="active_chat.arguments.functions[0].need_confirm">
+                <label for="ifuncconfirm" class="form-check-label">手动确认执行</label>
+            </div>
+        </div>
     </form>
 </template>
 <style scoped>

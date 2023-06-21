@@ -19,7 +19,24 @@ function default_arguments() {
                         }
                     ],
                     required: [],
-                }
+                },
+                code: 
+`async (args) => {
+    const query = args.query;
+    //console.log(query);
+    const API_KEY = 'AIzaSyA3U-apAO0SGhu3DfmJnRZyAfh3p4ctqF0';
+    const SEARCH_ENGINE_ID = '137b17e952f7f4f85';
+    const endPoint = `+'`https://www.googleapis.com/customsearch/v1?key=${API_KEY}&cx=${SEARCH_ENGINE_ID}&q=${query}`'+`;
+    const response = await fetch(endPoint);
+    const data = await response.json();
+    var rslt = [];
+    for (var i = 0; i < data.items.length; i++) {
+        rslt.push(data.items[i].snippet)
+    }
+    //console.log(data);
+    return rslt.join("\\n");
+}`,
+                need_confirm: true,
             }
         ],
         function_call: "none",
@@ -37,7 +54,18 @@ function default_arguments() {
 }
 
 function normalize_msg(msgs, compact_mode) {
-    const rslt = msgs.filter((m)=>{return m.role == "system" || m.role == "user" || m.role == "assistant"}).map((m)=>{return {role: m.role, content: m.content}});
+    const rslt = msgs.filter((m)=>{return m.role == "system" || m.role == "user" || m.role == "assistant" || m.role == "function"}).map(
+        (m)=>{
+            const r = {role: m.role, content: m.content};
+            if(m.name) {
+                r.name = m.name;
+            }
+            if(m.function_call) {
+                r.function_call = m.function_call;
+            }
+            return r;
+        }
+    );
     if(compact_mode) {
         for(var i=rslt.length-1; i >= 0; i--) {
             if(rslt[i].role=="user") {
@@ -129,7 +157,6 @@ function compose_arguments(chat, compact_mode) {
         };
         const new_properties = {};
         for(var j=0;j<chat.arguments.functions[i].parameters.properties.length;j++) {
-            console.log(chat.arguments.functions[i].parameters.properties[j])
             new_properties[chat.arguments.functions[i].parameters.properties[j].name] = {type: chat.arguments.functions[i].parameters.properties[j].type, description: chat.arguments.functions[i].parameters.properties[j].description};
         }
         new_func.parameters.properties = new_properties;
@@ -357,13 +384,18 @@ function apply_trigger(msg, trigger_meta) {
     return eval("_"+trigger_meta.operator+"(msg.content, trigger_meta.value)")
 }
 
-function send_prompt(chat, is_retry, auto_title, compact_mode, use_proxy, custom_api, api_key, new_msg_callback, agent_meta) {
-    if((chat.new_prompt || is_retry) && !chat.waiting_for_resp) {
+function send_prompt(chat, is_retry, func_name, auto_title, compact_mode, use_proxy, custom_api, api_key, new_msg_callback, agent_meta) {
+    if((chat.new_prompt || is_retry || func_name) && !chat.waiting_for_resp) {
         chat.waiting_for_resp = true;
-        if(!is_retry) {
+        if(!is_retry && !func_name) {
             const msg = chat.new_prompt;
             chat.new_prompt = "";
             chat.messages.push({"role": "user", "content": msg, "_ts": (new Date()).toLocaleString()});
+        }
+        if(!is_retry && func_name) {
+            const msg = chat.new_prompt;
+            chat.new_prompt = "";
+            chat.messages.push({"role": "function", "name": func_name, "content": msg, "_ts": (new Date()).toLocaleString(), "_visible": false});
         }
         // 审核输入
         send_moderation(chat.messages[chat.messages.length - 1], use_proxy, api_key);
@@ -380,12 +412,24 @@ function send_prompt(chat, is_retry, auto_title, compact_mode, use_proxy, custom
                 if(resp.data.choices && resp.data.choices[0] && resp.data.choices[0].message) {
                     const new_answer = resp.data.choices[0].message;
                     var agent_on = {node: -1, meta: null};
-                    if(agent_meta) {
-                        for(var i=0;i<agent_meta.length;i++) {
-                            if(agent_meta[i].action == "run_js" && apply_trigger(new_answer, agent_meta[i].trigger)) {
-                                agent_on.node = i;
-                                agent_on.meta = agent_meta[i].trigger;
+                    // 如果model决定调用function，就无视agent_meta
+                    if(new_answer.function_call) {
+                        new_answer._visible = true;
+                        for(var i=0;i<chat.arguments.functions.length;i++) {
+                            if(chat.arguments.functions[i].name == new_answer.function_call.name) {
+                                new_answer._visible = chat.arguments.functions[i].need_confirm;
                                 break;
+                            }
+                        }
+                    }
+                    else {
+                        if(agent_meta) {
+                            for(var i=0;i<agent_meta.length;i++) {
+                                if(agent_meta[i].action == "run_js" && apply_trigger(new_answer, agent_meta[i].trigger)) {
+                                    agent_on.node = i;
+                                    agent_on.meta = agent_meta[i].trigger;
+                                    break;
+                                }
                             }
                         }
                     }
@@ -414,13 +458,16 @@ function send_prompt(chat, is_retry, auto_title, compact_mode, use_proxy, custom
                             if(agent_resp.next=="continue") {
                                 chat.messages.push({"role": "user", "content": agent_resp.data, "_visible": agent_resp.visible});
                                 chat.waiting_for_resp = false;
-                                send_prompt(chat, true, auto_title, compact_mode, use_proxy, custom_api, api_key, new_msg_callback, agent_meta);
+                                send_prompt(chat, true, func_name, auto_title, compact_mode, use_proxy, custom_api, api_key, new_msg_callback, agent_meta);
                             }
                             else if(agent_resp.next=="render") {
                                 chat.messages.push({"role": "assistant", "content": agent_resp.data, "_visible": true});
                             }
                             else {}
                         })();
+                    }
+                    if(new_answer.function_call) {
+                        call_func(chat, new_answer.function_call.name, new_answer.function_call.arguments, {auto_title: auto_title, compact_mode: compact_mode, use_proxy: use_proxy, custom_api: custom_api, api_key: api_key}, null);
                     }
                 }
             })
@@ -461,7 +508,7 @@ function try_again(chat, msgidx, auto_title, compact_mode, use_proxy, custom_api
     if(last_user_msg > -1) {
         chat.messages.splice(last_user_msg + 1, chat.messages.length - last_user_msg - 1);
     }
-    send_prompt(chat, true, auto_title, compact_mode, use_proxy, custom_api, api_key, new_msg_callback, null);
+    send_prompt(chat, true, null, auto_title, compact_mode, use_proxy, custom_api, api_key, new_msg_callback, null);
 }
 
 function predict_question(chat, force_refresh, compact_mode, use_proxy, custom_api, api_key) {
@@ -520,4 +567,19 @@ function predict_question(chat, force_refresh, compact_mode, use_proxy, custom_a
     }
 }
 
-export {  default_arguments, normalize_msg, get_title, send_prompt, stop_streaming, try_again, predict_question, validate_argument }
+async function call_func(chat, func_name, args, cfg, new_msg_callback) {
+    chat.waiting_for_func = true;
+    for(var i=0;i<chat.arguments.functions.length;i++) {
+        const func = chat.arguments.functions[i];
+        if(func.name == func_name) {
+            const call_rslt = await eval(func.code)(JSON.parse(args));
+            chat.waiting_for_func = false;
+            chat.new_prompt = call_rslt;
+            send_prompt(chat, false, func_name, cfg.auto_title, cfg.compact_mode, cfg.use_proxy, cfg.custom_api, cfg.api_key, new_msg_callback, null);
+            break;
+        }
+    }
+    chat.waiting_for_func = false;
+}
+
+export {  default_arguments, normalize_msg, get_title, send_prompt, stop_streaming, try_again, predict_question, validate_argument, call_func }
