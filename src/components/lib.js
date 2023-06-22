@@ -2,42 +2,67 @@ import axios from "axios"
 import { fetchEventSource, EventStreamContentType } from "@microsoft/fetch-event-source"
 import { nextTick } from "vue"
 
+function default_func_param(index) {
+    return {
+        name: "arg"+index,
+        type: "string",
+        description: "The first argument.",
+    }
+}
+
+function default_function() {
+    return {
+        name: "new_function",
+        description: "When you don't know the answer, call this function.",
+        parameters: {
+            type: "object",
+            properties: [
+                default_func_param(1)
+            ],
+            required: [],
+        },
+        code: 'async (args) => {\n    return "Hello, world!";\n}',
+        need_confirm: true
+    }
+}
+
 function default_arguments() {
     return {
         model: "gpt-3.5-turbo-0613",
         functions: [
-            {
-                name: "ask_google",
-                description: "When you don't know the answer, call this function to ask Google.",
-                parameters: {
-                    type: "object",
-                    properties: [
-                        {
-                            name: "query",
-                            type: "string",
-                            description: "The query to ask Google.",
-                        }
-                    ],
-                    required: [],
-                },
-                code: 
-`async (args) => {
-    const query = args.query;
-    //console.log(query);
-    const API_KEY = 'AIzaSyA3U-apAO0SGhu3DfmJnRZyAfh3p4ctqF0';
-    const SEARCH_ENGINE_ID = '137b17e952f7f4f85';
-    const endPoint = `+'`https://www.googleapis.com/customsearch/v1?key=${API_KEY}&cx=${SEARCH_ENGINE_ID}&q=${query}`'+`;
-    const response = await fetch(endPoint);
-    const data = await response.json();
-    var rslt = [];
-    for (var i = 0; i < data.items.length; i++) {
-        rslt.push(data.items[i].snippet)
-    }
-    //console.log(data);
-    return rslt.join("\\n");
-}`,
-                need_confirm: true,
-            }
+            default_function(),
+//             {
+//                 name: "ask_google",
+//                 description: "When you don't know the answer, call this function to ask Google.",
+//                 parameters: {
+//                     type: "object",
+//                     properties: [
+//                         {
+//                             name: "query",
+//                             type: "string",
+//                             description: "The query to ask Google.",
+//                         }
+//                     ],
+//                     required: [],
+//                 },
+//                 code: 
+// `async (args) => {
+//     const query = args.query;
+//     //console.log(query);
+//     const API_KEY = 'AIzaSyA3U-apAO0SGhu3DfmJnRZyAfh3p4ctqF0';
+//     const SEARCH_ENGINE_ID = '137b17e952f7f4f85';
+//     const endPoint = `+'`https://www.googleapis.com/customsearch/v1?key=${API_KEY}&cx=${SEARCH_ENGINE_ID}&q=${query}`'+`;
+//     const response = await fetch(endPoint);
+//     const data = await response.json();
+//     var rslt = [];
+//     for (var i = 0; i < data.items.length; i++) {
+//         rslt.push(data.items[i].snippet)
+//     }
+//     //console.log(data);
+//     return rslt.join("\\n");
+// }`,
+//                 need_confirm: true,
+//             }
         ],
         function_call: "none",
         temperature: 1,
@@ -466,7 +491,7 @@ function send_prompt(chat, is_retry, func_name, auto_title, compact_mode, use_pr
                             else {}
                         })();
                     }
-                    if(new_answer.function_call) {
+                    if(new_answer.function_call && new_answer._visible === false) {
                         call_func(chat, new_answer.function_call.name, new_answer.function_call.arguments, {auto_title: auto_title, compact_mode: compact_mode, use_proxy: use_proxy, custom_api: custom_api, api_key: api_key}, null);
                     }
                 }
@@ -582,4 +607,4 @@ async function call_func(chat, func_name, args, cfg, new_msg_callback) {
     chat.waiting_for_func = false;
 }
 
-export {  default_arguments, normalize_msg, get_title, send_prompt, stop_streaming, try_again, predict_question, validate_argument, call_func }
+export { default_func_param, default_function, default_arguments, normalize_msg, get_title, send_prompt, stop_streaming, try_again, predict_question, validate_argument, call_func }

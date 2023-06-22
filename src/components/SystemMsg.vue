@@ -1,6 +1,6 @@
 <script setup>
 import { ref } from "vue"
-import { validate_argument } from "./lib.js"
+import { default_func_param, default_function, validate_argument } from "./lib.js"
 defineProps({
     msg: Object,
     active_chat: Object,
@@ -128,41 +128,45 @@ const invalid_logitbias = ref(null);
             </div>
         </div>
         <div class="col-12">
-            <label class="form-label fw-bold">functions</label>
+            <label class="form-label fw-bold">functions<i class="bi bi-plus-circle ms-2" role="button" @click="active_chat.arguments.functions.push(default_function())"></i></label>
         </div>
-        <div class="col-md-3">
-            <label for="ifuncname" class="form-label fw-bold w-100 clearfix">name</label>
-            <input :readonly="view_only" type="text" class="form-control-sm" :class="{'form-control-plaintext': view_only, 'form-control': !view_only}" id="ifuncname" v-model="active_chat.arguments.functions[0].name">
-        </div>
-        <div class="col-md-9">
-            <label for="ifuncdesc" class="form-label fw-bold w-100 clearfix">description</label>
-            <input :readonly="view_only" type="text" class="form-control-sm" :class="{'form-control-plaintext': view_only, 'form-control': !view_only}" id="ifuncdesc" v-model="active_chat.arguments.functions[0].description">
-        </div>
-        <div class="col-12">
-            <label class="form-label fw-bold">parameters</label>
-        </div>
-        <template v-for="(funcparam, funcparamidx) in active_chat.arguments.functions[0].parameters.properties">
+        <template v-for="func, funcidx in active_chat.arguments.functions">
+            <div class="col-md-12">#{{ funcidx+1 }}<i class="bi bi-dash-circle ms-2" role="button" @click="active_chat.arguments.functions.splice(funcidx, 1)"></i></div>
             <div class="col-md-3">
-                <label for="ifuncparamname" class="form-label fw-bold w-100 clearfix">name</label>
-                <input :readonly="view_only" type="text" class="form-control-sm" :class="{'form-control-plaintext': view_only, 'form-control': !view_only}" id="ifuncparamname" v-model="funcparam.name">
+                <label :for="'ifuncname'+funcidx" class="form-label fw-bold w-100 clearfix">name</label>
+                <input :readonly="view_only" type="text" class="form-control-sm" :class="{'form-control-plaintext': view_only, 'form-control': !view_only}" :id="'ifuncname'+funcidx" v-model="func.name">
             </div>
-            <div class="col-md-3">
-                <label for="ifuncparamtype" class="form-label fw-bold w-100 clearfix">type</label>
-                <input :readonly="view_only" type="text" class="form-control-sm" :class="{'form-control-plaintext': view_only, 'form-control': !view_only}" id="ifuncparamtype" v-model="funcparam.type">
+            <div class="col-md-9">
+                <label :for="'ifuncdesc'+funcidx" class="form-label fw-bold w-100 clearfix">description</label>
+                <input :readonly="view_only" type="text" class="form-control-sm" :class="{'form-control-plaintext': view_only, 'form-control': !view_only}" :id="'ifuncdesc'+funcidx" v-model="func.description">
             </div>
-            <div class="col-md-6">
-                <label for="ifuncparamdesc" class="form-label fw-bold w-100 clearfix">description</label>
-                <input :readonly="view_only" type="text" class="form-control-sm" :class="{'form-control-plaintext': view_only, 'form-control': !view_only}" id="ifuncparamdesc" v-model="funcparam.description">
+            <div class="col-12">
+                <label class="form-label fw-bold">parameters<i class="bi bi-plus-circle ms-2" role="button" @click="func.parameters.properties.push(default_func_param(func.parameters.properties.length+1))"></i></label>
+            </div>
+            <template v-for="(funcparam, funcparamidx) in func.parameters.properties">
+                <div class="col-md-12">#{{ funcidx+1 }}.{{ funcparamidx+1 }}<i class="bi bi-dash-circle ms-2" role="button" @click="func.parameters.properties.splice(funcparamidx, 1)"></i></div>
+                <div class="col-md-3">
+                    <label :for="'ifuncparamname'+funcidx+'_'+funcparamidx" class="form-label fw-bold w-100 clearfix">name</label>
+                    <input :readonly="view_only" type="text" class="form-control-sm" :class="{'form-control-plaintext': view_only, 'form-control': !view_only}" :id="'ifuncparamname'+funcidx+'_'+funcparamidx" v-model="funcparam.name">
+                </div>
+                <div class="col-md-3">
+                    <label :for="'ifuncparamtype'+funcidx+'_'+funcparamidx" class="form-label fw-bold w-100 clearfix">type</label>
+                    <input :readonly="view_only" type="text" class="form-control-sm" :class="{'form-control-plaintext': view_only, 'form-control': !view_only}" :id="'ifuncparamtype'+funcidx+'_'+funcparamidx" v-model="funcparam.type">
+                </div>
+                <div class="col-md-6">
+                    <label :for="'ifuncparamdesc'+funcidx+'_'+funcparamidx" class="form-label fw-bold w-100 clearfix">description</label>
+                    <input :readonly="view_only" type="text" class="form-control-sm" :class="{'form-control-plaintext': view_only, 'form-control': !view_only}" :id="'ifuncparamdesc'+funcidx+'_'+funcparamidx" v-model="funcparam.description">
+                </div>
+            </template>
+            <div class="col-12">
+                <label class="form-label fw-bold" :for="'ifunccode'+funcidx">code</label>
+                <textarea :readonly="view_only" class="form-control form-control-sm" rows="5" :id="'ifunccode'+funcidx" v-model="func.code"></textarea>
+                <div class="form-check mt-2 form-control-sm">
+                    <input type="checkbox" class="form-check-input" :id="'ifuncconfirm'+funcidx" v-model="func.need_confirm">
+                    <label :for="'ifuncconfirm'+funcidx" class="form-check-label">手动确认执行</label>
+                </div>
             </div>
         </template>
-        <div class="col-12">
-            <label class="form-label fw-bold" for="ifunccode">code</label>
-            <textarea :readonly="view_only" class="form-control form-control-sm" rows="5" id="ifunccode" v-model="active_chat.arguments.functions[0].code"></textarea>
-            <div class="form-check mt-2 form-control-sm">
-                <input type="checkbox" class="form-check-input" id="ifuncconfirm" v-model="active_chat.arguments.functions[0].need_confirm">
-                <label for="ifuncconfirm" class="form-check-label">手动确认执行</label>
-            </div>
-        </div>
     </form>
 </template>
 <style scoped>
