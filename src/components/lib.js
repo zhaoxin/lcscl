@@ -7,6 +7,7 @@ function default_func_param(index) {
         name: "arg"+index,
         type: "string",
         description: "The first argument.",
+        required: true,
     }
 }
 
@@ -19,7 +20,6 @@ function default_function() {
             properties: [
                 default_func_param(1)
             ],
-            required: [],
         },
         code: 'async (args) => {\n    return "Hello, world!";\n}',
         need_confirm: true
@@ -49,7 +49,7 @@ function default_arguments() {
 // `async (args) => {
 //     const query = args.query;
 //     //console.log(query);
-//     const API_KEY = 'AIzaSyA3U-apAO0SGhu3DfmJnRZyAfh3p4ctqF0';
+//     const API_KEY = '';
 //     const SEARCH_ENGINE_ID = '137b17e952f7f4f85';
 //     const endPoint = `+'`https://www.googleapis.com/customsearch/v1?key=${API_KEY}&cx=${SEARCH_ENGINE_ID}&q=${query}`'+`;
 //     const response = await fetch(endPoint);
@@ -181,10 +181,15 @@ function compose_arguments(chat, compact_mode) {
             }
         };
         const new_properties = {};
+        const required_params = [];
         for(var j=0;j<chat.arguments.functions[i].parameters.properties.length;j++) {
             new_properties[chat.arguments.functions[i].parameters.properties[j].name] = {type: chat.arguments.functions[i].parameters.properties[j].type, description: chat.arguments.functions[i].parameters.properties[j].description};
+            if(chat.arguments.functions[i].parameters.properties[j].required) {
+                required_params.push(chat.arguments.functions[i].parameters.properties[j].name);
+            }
         }
         new_func.parameters.properties = new_properties;
+        new_func.parameters.required = required_params;
         reformat_funcs.push(new_func);
     }
     const arg2use = {

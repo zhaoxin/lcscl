@@ -157,6 +157,12 @@ const invalid_logitbias = ref(null);
                     <label :for="'ifuncparamdesc'+funcidx+'_'+funcparamidx" class="form-label fw-bold w-100 clearfix">description</label>
                     <input :readonly="view_only" type="text" class="form-control-sm" :class="{'form-control-plaintext': view_only, 'form-control': !view_only}" :id="'ifuncparamdesc'+funcidx+'_'+funcparamidx" v-model="funcparam.description">
                 </div>
+                <div class="col-12">
+                    <div class="form-check form-control-sm">
+                        <input type="checkbox" class="form-check-input" :id="'ifuncparamrequired'+funcidx+'_'+funcparamidx" v-model="funcparam.required">
+                        <label :for="'ifuncparamrequired'+funcidx+'_'+funcparamidx" class="form-check-label">必填</label>
+                    </div>
+                </div>
             </template>
             <div class="col-12">
                 <label class="form-label fw-bold" :for="'ifunccode'+funcidx">code</label>
